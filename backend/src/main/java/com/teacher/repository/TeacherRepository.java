@@ -7,4 +7,8 @@ import java.util.Optional;
 
 public interface TeacherRepository extends JpaRepository<Teacher, Long> {
     Optional<Teacher> findByTeacherNo(String teacherNo);
+
+    Optional<Teacher> findByTeacherNoAndIdNot(String teacherNo, Long id);
+
+    boolean existsByTeacherNo(String teacherNo);
 }
