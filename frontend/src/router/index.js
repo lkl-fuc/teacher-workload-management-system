@@ -3,6 +3,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import HomeView from '../views/HomeView.vue'
 import WorkloadTypeView from '../views/WorkloadTypeView.vue'
+import WorkloadCreateView from '../views/WorkloadCreateView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 const routes = [
@@ -30,6 +31,12 @@ const routes = [
         name: 'workloadTypes',
         component: WorkloadTypeView,
         meta: { title: '工作量类型管理' }
+      },
+      {
+        path: 'workloads/new',
+        name: 'workloadCreate',
+        component: WorkloadCreateView,
+        meta: { title: '新增工作量' }
       }
     ]
   }
