@@ -1,9 +1,12 @@
 <template>
   <header class="top-bar">
-    <div class="system-name">教师工作量管理系统</div>
+    <div>
+      <div class="system-name">教师工作量管理系统</div>
+      <div class="system-sub">毕业设计演示版本</div>
+    </div>
     <div class="right-area">
-      <span class="admin">管理员</span>
-      <el-button size="small" type="danger" plain @click="logout">退出登录</el-button>
+      <div class="admin-chip">管理员</div>
+      <el-button size="small" type="primary" plain @click="logout">退出登录</el-button>
     </div>
   </header>
 </template>
@@ -21,10 +24,8 @@ function logout() {
 
 <style scoped>
 .top-bar {
-  height: 60px;
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
-  padding: 0 20px;
+  height: 68px;
+  padding: 0 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -32,7 +33,14 @@ function logout() {
 
 .system-name {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.system-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .right-area {
@@ -41,7 +49,12 @@ function logout() {
   gap: 12px;
 }
 
-.admin {
-  color: #606266;
+.admin-chip {
+  font-size: 13px;
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  padding: 5px 10px;
+  border-radius: 999px;
 }
 </style>
