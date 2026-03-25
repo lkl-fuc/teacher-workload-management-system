@@ -3,6 +3,9 @@
     :default-active="activeMenu"
     class="side-menu"
     router
+    background-color="transparent"
+    text-color="rgba(255,255,255,0.86)"
+    active-text-color="#ffffff"
   >
     <el-menu-item index="/home">
       <el-icon><House /></el-icon>
@@ -24,7 +27,6 @@
       <el-icon><Finished /></el-icon>
       <span>工作量审核</span>
     </el-menu-item>
-
     <el-menu-item index="/workloads/stats">
       <el-icon><PieChart /></el-icon>
       <span>工作量统计分析</span>
@@ -45,6 +47,21 @@ const activeMenu = computed(() => route.path)
 <style scoped>
 .side-menu {
   border-right: none;
-  height: 100%;
+  height: calc(100% - 74px);
+  padding: 12px;
+}
+
+.side-menu :deep(.el-menu-item) {
+  margin-bottom: 6px;
+  border-radius: 10px;
+}
+
+.side-menu :deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.side-menu :deep(.el-menu-item.is-active) {
+  background: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
 }
 </style>
