@@ -20,13 +20,17 @@
       <el-icon><Tickets /></el-icon>
       <span>我的工作量列表</span>
     </el-menu-item>
+    <el-menu-item index="/workloads/audit">
+      <el-icon><Finished /></el-icon>
+      <span>工作量审核</span>
+    </el-menu-item>
   </el-menu>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { House, List, Plus, Tickets } from '@element-plus/icons-vue'
+import { Finished, House, List, Plus, Tickets } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
