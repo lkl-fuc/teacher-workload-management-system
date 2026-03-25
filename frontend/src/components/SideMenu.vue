@@ -8,13 +8,17 @@
       <el-icon><House /></el-icon>
       <span>首页</span>
     </el-menu-item>
+    <el-menu-item index="/workload-types">
+      <el-icon><List /></el-icon>
+      <span>工作量类型管理</span>
+    </el-menu-item>
   </el-menu>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { House } from '@element-plus/icons-vue'
+import { House, List } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
