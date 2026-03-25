@@ -24,13 +24,18 @@
       <el-icon><Finished /></el-icon>
       <span>工作量审核</span>
     </el-menu-item>
+
+    <el-menu-item index="/workloads/stats">
+      <el-icon><PieChart /></el-icon>
+      <span>工作量统计分析</span>
+    </el-menu-item>
   </el-menu>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Finished, House, List, Plus, Tickets } from '@element-plus/icons-vue'
+import { Finished, House, List, PieChart, Plus, Tickets } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
