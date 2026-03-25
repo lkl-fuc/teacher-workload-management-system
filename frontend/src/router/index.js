@@ -5,6 +5,7 @@ import HomeView from '../views/HomeView.vue'
 import WorkloadTypeView from '../views/WorkloadTypeView.vue'
 import WorkloadCreateView from '../views/WorkloadCreateView.vue'
 import WorkloadListView from '../views/WorkloadListView.vue'
+import WorkloadAuditView from '../views/WorkloadAuditView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 const routes = [
@@ -44,6 +45,12 @@ const routes = [
         name: 'workloadList',
         component: WorkloadListView,
         meta: { title: '我的工作量列表' }
+      },
+      {
+        path: 'workloads/audit',
+        name: 'workloadAudit',
+        component: WorkloadAuditView,
+        meta: { title: '工作量审核' }
       }
     ]
   }
