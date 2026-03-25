@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import HomeView from '../views/HomeView.vue'
 import WorkloadTypeView from '../views/WorkloadTypeView.vue'
 import WorkloadCreateView from '../views/WorkloadCreateView.vue'
+import WorkloadListView from '../views/WorkloadListView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 const routes = [
@@ -37,6 +38,12 @@ const routes = [
         name: 'workloadCreate',
         component: WorkloadCreateView,
         meta: { title: '新增工作量' }
+      },
+      {
+        path: 'workloads/my',
+        name: 'workloadList',
+        component: WorkloadListView,
+        meta: { title: '我的工作量列表' }
       }
     ]
   }
