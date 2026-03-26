@@ -27,38 +27,38 @@ const routes = [
         path: 'home',
         name: 'home',
         component: HomeView,
-        meta: { title: '首页' }
+        meta: { title: '首页', roles: ['ADMIN', 'TEACHER'] }
       },
       {
         path: 'workload-types',
         name: 'workloadTypes',
         component: WorkloadTypeView,
-        meta: { title: '工作量类型管理' }
+        meta: { title: '工作量类型管理', roles: ['ADMIN'] }
       },
       {
         path: 'workloads/new',
         name: 'workloadCreate',
         component: WorkloadCreateView,
-        meta: { title: '新增工作量' }
+        meta: { title: '新增工作量', roles: ['ADMIN', 'TEACHER'] }
       },
       {
         path: 'workloads/my',
         name: 'workloadList',
         component: WorkloadListView,
-        meta: { title: '我的工作量列表' }
+        meta: { title: '我的工作量列表', roles: ['ADMIN', 'TEACHER'] }
       },
       {
         path: 'workloads/audit',
         name: 'workloadAudit',
         component: WorkloadAuditView,
-        meta: { title: '工作量审核' }
+        meta: { title: '工作量审核', roles: ['ADMIN'] }
       },
 
       {
         path: 'workloads/stats',
         name: 'workloadStats',
         component: WorkloadStatsView,
-        meta: { title: '工作量统计分析' }
+        meta: { title: '工作量统计分析', roles: ['ADMIN', 'TEACHER'] }
       },
     ]
   }
@@ -80,6 +80,16 @@ router.beforeEach((to, from, next) => {
   if (to.path === '/login' && token) {
     next('/home')
     return
+  }
+
+  if (to.path !== '/login') {
+    const role = String(localStorage.getItem('role') || '').toUpperCase()
+    const allowedRoles = to.meta?.roles || []
+
+    if (Array.isArray(allowedRoles) && allowedRoles.length > 0 && !allowedRoles.includes(role)) {
+      next('/home')
+      return
+    }
   }
 
   next()

@@ -7,29 +7,13 @@
     text-color="rgba(255,255,255,0.86)"
     active-text-color="#ffffff"
   >
-    <el-menu-item index="/home">
-      <el-icon><House /></el-icon>
-      <span>首页</span>
-    </el-menu-item>
-    <el-menu-item index="/workload-types">
-      <el-icon><List /></el-icon>
-      <span>工作量类型管理</span>
-    </el-menu-item>
-    <el-menu-item index="/workloads/new">
-      <el-icon><Plus /></el-icon>
-      <span>新增工作量</span>
-    </el-menu-item>
-    <el-menu-item index="/workloads/my">
-      <el-icon><Tickets /></el-icon>
-      <span>我的工作量列表</span>
-    </el-menu-item>
-    <el-menu-item index="/workloads/audit">
-      <el-icon><Finished /></el-icon>
-      <span>工作量审核</span>
-    </el-menu-item>
-    <el-menu-item index="/workloads/stats">
-      <el-icon><PieChart /></el-icon>
-      <span>工作量统计分析</span>
+    <el-menu-item
+      v-for="item in menuItems"
+      :key="item.index"
+      :index="item.index"
+    >
+      <el-icon><component :is="item.icon" /></el-icon>
+      <span>{{ item.label }}</span>
     </el-menu-item>
   </el-menu>
 </template>
@@ -40,6 +24,26 @@ import { useRoute } from 'vue-router'
 import { Finished, House, List, PieChart, Plus, Tickets } from '@element-plus/icons-vue'
 
 const route = useRoute()
+
+const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
+
+const adminMenuItems = [
+  { index: '/home', label: '首页', icon: House },
+  { index: '/workload-types', label: '工作量类型管理', icon: List },
+  { index: '/workloads/new', label: '新增工作量', icon: Plus },
+  { index: '/workloads/my', label: '我的工作量列表', icon: Tickets },
+  { index: '/workloads/audit', label: '工作量审核', icon: Finished },
+  { index: '/workloads/stats', label: '工作量统计分析', icon: PieChart }
+]
+
+const teacherMenuItems = [
+  { index: '/home', label: '首页', icon: House },
+  { index: '/workloads/new', label: '填写工作量', icon: Plus },
+  { index: '/workloads/my', label: '我的提交记录', icon: Tickets },
+  { index: '/workloads/stats', label: '个人工作量统计', icon: PieChart }
+]
+
+const menuItems = computed(() => (role.value === 'TEACHER' ? teacherMenuItems : adminMenuItems))
 
 const activeMenu = computed(() => route.path)
 </script>
