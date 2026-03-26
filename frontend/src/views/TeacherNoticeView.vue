@@ -23,11 +23,72 @@
 </template>
 
 <script setup>
-const notices = [
-  { date: '2026-03-20', title: '春季学期工作量填报开始', content: '请各位教师在 4 月 10 日前完成本月教学与科研工作量填报。', type: 'primary' },
-  { date: '2026-03-18', title: '新增科研项目计分规则', content: '校级科研项目新增“阶段验收通过”积分项，请按新口径填报。', type: 'success' },
-  { date: '2026-03-15', title: '系统维护通知', content: '本周六 22:00-23:00 系统进行维护，期间可能短暂不可用。', type: 'warning' }
-]
+import { onMounted, ref } from 'vue'
+
+const notices = ref([
+  { date: '2026-03-20', title: '春季学期工作量填报开始', content: '请各位教师按时完成工作量任务。', type: 'primary' }
+])
+
+async function request(url, options = {}) {
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    },
+    ...options
+  })
+  if (!response.ok) throw new Error('请求失败')
+  return response.json()
+}
+
+function resolveTeacherId() {
+  const candidates = [localStorage.getItem('teacherId'), localStorage.getItem('userId'), localStorage.getItem('id')]
+  for (const raw of candidates) {
+    const id = Number(raw)
+    if (!Number.isNaN(id) && id > 0) return id
+  }
+  return null
+}
+
+async function loadWorkloadNotices() {
+  const teacherId = resolveTeacherId()
+  if (!teacherId) return
+  const data = await request(`/api/workloads/teacher/${teacherId}`)
+  const workloadNotices = (Array.isArray(data) ? data : [])
+    .filter((item) => ['APPROVED', 'REJECTED', 'ASSIGNED'].includes(String(item.status || '').toUpperCase()))
+    .slice(0, 6)
+    .map((item) => {
+      const status = String(item.status || '').toUpperCase()
+      if (status === 'APPROVED') {
+        return {
+          date: item.submitDate,
+          title: `任务《${item.workloadTitle}》审核通过`,
+          content: '管理员已审核通过该任务。',
+          type: 'success'
+        }
+      }
+      if (status === 'REJECTED') {
+        return {
+          date: item.submitDate,
+          title: `任务《${item.workloadTitle}》被驳回`,
+          content: item.rejectReason || '请根据驳回原因重新完成任务并提交。',
+          type: 'danger'
+        }
+      }
+      return {
+        date: item.submitDate,
+        title: `收到新任务《${item.workloadTitle}》`,
+        content: '请尽快填写完成情况并提交给管理员审核。',
+        type: 'warning'
+      }
+    })
+
+  notices.value = [...workloadNotices, ...notices.value]
+}
+
+onMounted(() => {
+  loadWorkloadNotices()
+})
 </script>
 
 <style scoped>

@@ -23,6 +23,24 @@
         </el-select>
       </el-form-item>
 
+      <el-form-item v-if="isAdmin" label="分发教师" prop="teacherId">
+        <el-select
+          v-model="form.teacherId"
+          placeholder="请选择要分发的教师"
+          style="width: 100%"
+          filterable
+          clearable
+          :loading="teacherLoading"
+        >
+          <el-option
+            v-for="item in teacherOptions"
+            :key="item.id"
+            :label="`${item.name}（${item.teacherNo}）`"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
+
       <el-form-item label="标题" prop="title">
         <el-input v-model="form.title" placeholder="请输入标题" maxlength="100" show-word-limit />
       </el-form-item>
@@ -69,15 +87,20 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
 const formRef = ref()
 const submitLoading = ref(false)
 const typeLoading = ref(false)
+const teacherLoading = ref(false)
 const typeOptions = ref([])
+const teacherOptions = ref([])
+const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
+const isAdmin = computed(() => role.value === 'ADMIN')
 
 const form = reactive({
+  teacherId: null,
   typeId: null,
   title: '',
   score: 0,
@@ -85,12 +108,13 @@ const form = reactive({
   workDate: ''
 })
 
-const rules = {
+const rules = computed(() => ({
+  teacherId: isAdmin.value ? [{ required: true, message: '请选择分发教师', trigger: 'change' }] : [],
   typeId: [{ required: true, message: '请选择工作类型', trigger: 'change' }],
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   score: [{ required: true, message: '请输入分值', trigger: 'change' }],
   workDate: [{ required: true, message: '请选择工作日期', trigger: 'change' }]
-}
+}))
 
 function normalizeError(error, fallback) {
   if (error?.message) return error.message
@@ -125,6 +149,7 @@ async function request(url, options = {}) {
 }
 
 function resetFormModel() {
+  form.teacherId = null
   form.typeId = null
   form.title = ''
   form.score = 0
@@ -144,15 +169,30 @@ async function loadTypeOptions() {
   }
 }
 
+async function loadTeacherOptions() {
+  if (!isAdmin.value) return
+  teacherLoading.value = true
+  try {
+    const data = await request('/api/teachers')
+    teacherOptions.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    ElMessage.error(normalizeError(error, '获取教师列表失败'))
+  } finally {
+    teacherLoading.value = false
+  }
+}
+
 async function handleSubmit() {
   if (!formRef.value) return
 
   await formRef.value.validate(async (valid) => {
     if (!valid) return
 
-    const teacherId = Number(localStorage.getItem('teacherId') || localStorage.getItem('userId'))
+    const teacherId = isAdmin.value
+      ? Number(form.teacherId)
+      : Number(localStorage.getItem('teacherId') || localStorage.getItem('userId'))
     if (Number.isNaN(teacherId) || teacherId <= 0) {
-      ElMessage.warning('当前未识别到教师身份，请先使用教师账号登录')
+      ElMessage.warning(isAdmin.value ? '请选择分发教师' : '当前未识别到教师身份，请先使用教师账号登录')
       return
     }
 
@@ -165,7 +205,7 @@ async function handleSubmit() {
         amount: form.score,
         description: form.description,
         submitDate: form.workDate,
-        status: 'PENDING'
+        status: isAdmin.value ? 'ASSIGNED' : 'PENDING'
       }
 
       await request('/api/workloads', {
@@ -173,7 +213,7 @@ async function handleSubmit() {
         body: JSON.stringify(payload)
       })
 
-      ElMessage.success('新增工作量成功')
+      ElMessage.success(isAdmin.value ? '工作量任务已分发给教师' : '新增工作量成功')
       handleReset()
     } catch (error) {
       ElMessage.error(normalizeError(error, '提交失败'))
@@ -190,5 +230,6 @@ function handleReset() {
 
 onMounted(() => {
   loadTypeOptions()
+  loadTeacherOptions()
 })
 </script>

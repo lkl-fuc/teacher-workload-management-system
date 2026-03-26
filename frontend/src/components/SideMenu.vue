@@ -30,15 +30,15 @@ const role = computed(() => String(localStorage.getItem('role') || '').toUpperCa
 const adminMenuItems = [
   { index: '/home', label: '首页', icon: House },
   { index: '/workload-types', label: '工作量类型管理', icon: List },
+  { index: '/admin/teachers', label: '教师信息', icon: User },
   { index: '/workloads/new', label: '新增工作量', icon: Plus },
-  { index: '/workloads/my', label: '我的工作量列表', icon: Tickets },
+  { index: '/workloads/my', label: '全体教师工作量列表', icon: Tickets },
   { index: '/workloads/audit', label: '工作量审核', icon: Finished },
   { index: '/workloads/stats', label: '工作量统计分析', icon: PieChart }
 ]
 
 const teacherMenuItems = [
   { index: '/home', label: '首页', icon: House },
-  { index: '/workloads/new', label: '填写工作量', icon: Plus },
   { index: '/workloads/my', label: '我的提交记录', icon: Tickets },
   { index: '/workloads/stats', label: '个人工作量统计', icon: PieChart },
   { index: '/teacher/notices', label: '通知公告', icon: Bell },
