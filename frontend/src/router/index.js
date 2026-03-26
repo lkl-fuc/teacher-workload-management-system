@@ -7,6 +7,9 @@ import WorkloadCreateView from '../views/WorkloadCreateView.vue'
 import WorkloadListView from '../views/WorkloadListView.vue'
 import WorkloadAuditView from '../views/WorkloadAuditView.vue'
 import WorkloadStatsView from '../views/WorkloadStatsView.vue'
+import TeacherProfileView from '../views/TeacherProfileView.vue'
+import TeacherScheduleView from '../views/TeacherScheduleView.vue'
+import TeacherNoticeView from '../views/TeacherNoticeView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 const routes = [
@@ -59,6 +62,25 @@ const routes = [
         name: 'workloadStats',
         component: WorkloadStatsView,
         meta: { title: '工作量统计分析', roles: ['ADMIN', 'TEACHER'] }
+      },
+
+      {
+        path: 'teacher/notices',
+        name: 'teacherNotices',
+        component: TeacherNoticeView,
+        meta: { title: '通知公告', roles: ['TEACHER'] }
+      },
+      {
+        path: 'teacher/schedule',
+        name: 'teacherSchedule',
+        component: TeacherScheduleView,
+        meta: { title: '教学安排', roles: ['TEACHER'] }
+      },
+      {
+        path: 'teacher/profile',
+        name: 'teacherProfile',
+        component: TeacherProfileView,
+        meta: { title: '个人信息', roles: ['TEACHER'] }
       },
     ]
   }
