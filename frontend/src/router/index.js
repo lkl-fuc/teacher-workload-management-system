@@ -10,6 +10,7 @@ import WorkloadStatsView from '../views/WorkloadStatsView.vue'
 import TeacherProfileView from '../views/TeacherProfileView.vue'
 import TeacherScheduleView from '../views/TeacherScheduleView.vue'
 import TeacherNoticeView from '../views/TeacherNoticeView.vue'
+import AdminTeacherInfoView from '../views/AdminTeacherInfoView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 const routes = [
@@ -48,7 +49,13 @@ const routes = [
         path: 'workloads/my',
         name: 'workloadList',
         component: WorkloadListView,
-        meta: { title: '我的工作量列表', roles: ['ADMIN', 'TEACHER'] }
+        meta: { title: '工作量列表', roles: ['ADMIN', 'TEACHER'] }
+      },
+      {
+        path: 'admin/teachers',
+        name: 'adminTeachers',
+        component: AdminTeacherInfoView,
+        meta: { title: '教师信息', roles: ['ADMIN'] }
       },
       {
         path: 'workloads/audit',
