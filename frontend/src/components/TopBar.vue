@@ -5,19 +5,32 @@
       <div class="system-sub">毕业设计演示版本</div>
     </div>
     <div class="right-area">
-      <div class="admin-chip">管理员</div>
+      <div class="admin-chip">{{ displayIdentity }}</div>
       <el-button size="small" type="primary" plain @click="logout">退出登录</el-button>
     </div>
   </header>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
+const displayIdentity = computed(() => {
+  const role = String(localStorage.getItem('role') || '').toUpperCase()
+  const name = localStorage.getItem('name') || ''
+  const roleLabel = role === 'TEACHER' ? '教师' : '管理员'
+  return name ? `${roleLabel}：${name}` : roleLabel
+})
+
 function logout() {
   localStorage.removeItem('token')
+  localStorage.removeItem('id')
+  localStorage.removeItem('userId')
+  localStorage.removeItem('teacherId')
+  localStorage.removeItem('role')
+  localStorage.removeItem('name')
   router.push('/login')
 }
 </script>
