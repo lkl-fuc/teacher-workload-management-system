@@ -45,7 +45,7 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="16">
+    <el-row v-if="isAdmin" :gutter="16">
       <el-col :xs="24" :lg="12">
         <el-card class="chart-card" shadow="hover">
           <template #header>按教师统计（柱状图）</template>
@@ -275,8 +275,8 @@ async function loadData() {
 }
 
 function initCharts() {
-  if (teacherBarRef.value) teacherBarChart = echartsLib.init(teacherBarRef.value)
-  if (teacherPieRef.value) teacherPieChart = echartsLib.init(teacherPieRef.value)
+  if (isAdmin.value && teacherBarRef.value) teacherBarChart = echartsLib.init(teacherBarRef.value)
+  if (isAdmin.value && teacherPieRef.value) teacherPieChart = echartsLib.init(teacherPieRef.value)
   if (typeBarRef.value) typeBarChart = echartsLib.init(typeBarRef.value)
   if (typePieRef.value) typePieChart = echartsLib.init(typePieRef.value)
   if (monthBarRef.value) monthBarChart = echartsLib.init(monthBarRef.value)
@@ -284,8 +284,10 @@ function initCharts() {
 }
 
 function renderCharts() {
-  renderBarChart(teacherBarChart, teacherStats.value, '教师工作量（按教师）')
-  renderPieChart(teacherPieChart, teacherStats.value, '教师占比')
+  if (isAdmin.value) {
+    renderBarChart(teacherBarChart, teacherStats.value, '教师工作量（按教师）')
+    renderPieChart(teacherPieChart, teacherStats.value, '教师占比')
+  }
   renderBarChart(typeBarChart, typeStats.value, '工作量（按类型）')
   renderPieChart(typePieChart, typeStats.value, '类型占比')
 
