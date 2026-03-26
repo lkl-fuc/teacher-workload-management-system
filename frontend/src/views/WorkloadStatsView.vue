@@ -91,6 +91,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
 const selectedYear = ref(new Date().getFullYear().toString())
+const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
+const isAdmin = computed(() => role.value === 'ADMIN')
 
 const workloads = ref([])
 const teachers = ref([])
@@ -156,6 +158,20 @@ const statsSummary = computed(() => ({
   totalCount: filteredWorkloads.value.length,
   totalAmount: filteredWorkloads.value.reduce((sum, item) => sum + Number(item.amount || 0), 0)
 }))
+
+function resolveTeacherId() {
+  const candidates = [
+    localStorage.getItem('teacherId'),
+    localStorage.getItem('userId'),
+    localStorage.getItem('id')
+  ]
+
+  for (const raw of candidates) {
+    const id = Number(raw)
+    if (!Number.isNaN(id) && id > 0) return id
+  }
+  return null
+}
 
 
 function loadEchartsScript() {
@@ -229,15 +245,33 @@ async function request(url, options = {}) {
 }
 
 async function loadData() {
-  const [workloadData, teacherData, typeData] = await Promise.all([
-    request('/api/workloads'),
-    request('/api/teachers'),
-    request('/api/workload-types')
-  ])
-
-  workloads.value = Array.isArray(workloadData) ? workloadData : []
-  teachers.value = Array.isArray(teacherData) ? teacherData : []
+  const typeData = await request('/api/workload-types')
   workloadTypes.value = Array.isArray(typeData) ? typeData : []
+
+  if (isAdmin.value) {
+    const [workloadData, teacherData] = await Promise.all([
+      request('/api/workloads'),
+      request('/api/teachers')
+    ])
+    workloads.value = Array.isArray(workloadData) ? workloadData : []
+    teachers.value = Array.isArray(teacherData) ? teacherData : []
+    return
+  }
+
+  const teacherId = resolveTeacherId()
+  if (!teacherId) {
+    workloads.value = []
+    teachers.value = []
+    ElMessage.warning('未获取到教师ID，暂时无法加载个人工作量统计')
+    return
+  }
+
+  const workloadData = await request(`/api/workloads/teacher/${teacherId}`)
+  const teacherName = localStorage.getItem('name')
+    || localStorage.getItem('username')
+    || `教师#${teacherId}`
+  workloads.value = Array.isArray(workloadData) ? workloadData : []
+  teachers.value = [{ id: teacherId, name: teacherName }]
 }
 
 function initCharts() {
