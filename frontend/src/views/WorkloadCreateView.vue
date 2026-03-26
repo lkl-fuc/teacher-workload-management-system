@@ -150,14 +150,22 @@ async function handleSubmit() {
   await formRef.value.validate(async (valid) => {
     if (!valid) return
 
+    const teacherId = Number(localStorage.getItem('teacherId') || localStorage.getItem('userId'))
+    if (Number.isNaN(teacherId) || teacherId <= 0) {
+      ElMessage.warning('当前未识别到教师身份，请先使用教师账号登录')
+      return
+    }
+
     submitLoading.value = true
     try {
       const payload = {
+        teacherId,
         typeId: form.typeId,
-        title: form.title,
-        score: form.score,
+        workloadTitle: form.title,
+        amount: form.score,
         description: form.description,
-        workDate: form.workDate
+        submitDate: form.workDate,
+        status: 'PENDING'
       }
 
       await request('/api/workloads', {
