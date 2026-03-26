@@ -77,6 +77,7 @@ function clearSession() {
   localStorage.removeItem('teacherId')
   localStorage.removeItem('role')
   localStorage.removeItem('name')
+  localStorage.removeItem('username')
 }
 
 async function handleLogin() {
@@ -106,6 +107,7 @@ async function handleLogin() {
     localStorage.setItem('userId', String(result.id))
     localStorage.setItem('role', result.role || form.role)
     localStorage.setItem('name', result.name || '')
+    localStorage.setItem('username', result.username || form.username)
     if (String(result.role || form.role).toUpperCase() === 'TEACHER') {
       localStorage.setItem('teacherId', String(result.id))
     }

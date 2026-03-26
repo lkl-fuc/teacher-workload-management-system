@@ -21,7 +21,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Finished, House, List, PieChart, Plus, Tickets } from '@element-plus/icons-vue'
+import { Bell, Calendar, Finished, House, List, PieChart, Plus, Tickets, User } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -40,7 +40,10 @@ const teacherMenuItems = [
   { index: '/home', label: '首页', icon: House },
   { index: '/workloads/new', label: '填写工作量', icon: Plus },
   { index: '/workloads/my', label: '我的提交记录', icon: Tickets },
-  { index: '/workloads/stats', label: '个人工作量统计', icon: PieChart }
+  { index: '/workloads/stats', label: '个人工作量统计', icon: PieChart },
+  { index: '/teacher/notices', label: '通知公告', icon: Bell },
+  { index: '/teacher/schedule', label: '教学安排', icon: Calendar },
+  { index: '/teacher/profile', label: '个人信息', icon: User }
 ]
 
 const menuItems = computed(() => (role.value === 'TEACHER' ? teacherMenuItems : adminMenuItems))
