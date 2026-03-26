@@ -3,17 +3,30 @@
     <template #header>
       <div class="header-row">
         <span>我的工作量列表</span>
-        <el-input
-          v-model="keyword"
-          placeholder="按标题/描述/审核状态搜索"
-          clearable
-          style="width: 280px"
-          @input="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
+        <div class="header-actions">
+          <el-select
+            v-model="statusFilter"
+            placeholder="按状态筛选"
+            clearable
+            style="width: 150px"
+            @change="handleSearch"
+          >
+            <el-option label="待审核" value="PENDING" />
+            <el-option label="已通过" value="APPROVED" />
+            <el-option label="已驳回" value="REJECTED" />
+          </el-select>
+          <el-input
+            v-model="keyword"
+            placeholder="按标题/描述/审核状态搜索"
+            clearable
+            style="width: 280px"
+            @input="handleSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+        </div>
       </div>
     </template>
 
@@ -34,10 +47,21 @@
       </el-table-column>
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" @click="openEditDialog(scope.row)">编辑</el-button>
-          <el-popconfirm title="确认删除该记录吗？" @confirm="handleDelete(scope.row.id)">
+          <el-button
+            link
+            type="warning"
+            :disabled="!canResubmit(scope.row.status)"
+            @click="handleResubmit(scope.row)"
+          >
+            重新提交
+          </el-button>
+          <el-popconfirm
+            title="确认删除该记录吗？"
+            :disabled="!canModify(scope.row.status)"
+            @confirm="handleDelete(scope.row.id)"
+          >
             <template #reference>
-              <el-button link type="danger">删除</el-button>
+              <el-button link type="danger" :disabled="!canModify(scope.row.status)">删除</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -56,50 +80,10 @@
     </div>
   </el-card>
 
-  <el-dialog v-model="editVisible" title="编辑工作量" width="560px" destroy-on-close>
-    <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="100px">
-      <el-form-item label="工作标题" prop="workloadTitle">
-        <el-input v-model="editForm.workloadTitle" maxlength="100" show-word-limit />
-      </el-form-item>
-      <el-form-item label="描述" prop="description">
-        <el-input
-          v-model="editForm.description"
-          type="textarea"
-          :rows="3"
-          maxlength="300"
-          show-word-limit
-        />
-      </el-form-item>
-      <el-form-item label="分值" prop="amount">
-        <el-input-number
-          v-model="editForm.amount"
-          :min="0"
-          :max="999999"
-          :precision="2"
-          :step="0.5"
-          controls-position="right"
-          style="width: 100%"
-        />
-      </el-form-item>
-      <el-form-item label="提交日期" prop="submitDate">
-        <el-date-picker
-          v-model="editForm.submitDate"
-          type="date"
-          value-format="YYYY-MM-DD"
-          style="width: 100%"
-        />
-      </el-form-item>
-    </el-form>
-
-    <template #footer>
-      <el-button @click="editVisible = false">取消</el-button>
-      <el-button type="primary" :loading="submitLoading" @click="handleSaveEdit">保存</el-button>
-    </template>
-  </el-dialog>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 
@@ -107,24 +91,9 @@ const tableLoading = ref(false)
 const submitLoading = ref(false)
 const rows = ref([])
 const keyword = ref('')
+const statusFilter = ref('')
 const page = ref(1)
 const pageSize = ref(10)
-
-const editVisible = ref(false)
-const editFormRef = ref()
-const editForm = reactive({
-  id: null,
-  workloadTitle: '',
-  description: '',
-  amount: 0,
-  submitDate: ''
-})
-
-const editRules = {
-  workloadTitle: [{ required: true, message: '请输入工作标题', trigger: 'blur' }],
-  amount: [{ required: true, message: '请输入分值', trigger: 'change' }],
-  submitDate: [{ required: true, message: '请选择提交日期', trigger: 'change' }]
-}
 
 function normalizeError(error, fallback) {
   if (error?.message) return error.message
@@ -160,9 +129,12 @@ async function request(url, options = {}) {
 
 const filteredRows = computed(() => {
   const q = keyword.value.trim().toLowerCase()
-  if (!q) return rows.value
 
   return rows.value.filter((item) => {
+    if (statusFilter.value && String(item.status || '').toUpperCase() !== statusFilter.value) {
+      return false
+    }
+    if (!q) return true
     const status = statusText(item.status)
     return [item.workloadTitle, item.description, status, item.rejectReason]
       .filter(Boolean)
@@ -177,6 +149,14 @@ const pagedRows = computed(() => {
 
 function handleSearch() {
   page.value = 1
+}
+
+function canResubmit(status) {
+  return String(status || '').toUpperCase() === 'REJECTED'
+}
+
+function canModify(status) {
+  return String(status || '').toUpperCase() !== 'APPROVED'
 }
 
 function statusText(status) {
@@ -228,43 +208,28 @@ async function loadRows() {
   }
 }
 
-function openEditDialog(row) {
-  editForm.id = row.id
-  editForm.workloadTitle = row.workloadTitle || ''
-  editForm.description = row.description || ''
-  editForm.amount = row.amount ?? 0
-  editForm.submitDate = row.submitDate || ''
-  editVisible.value = true
-}
+async function handleResubmit(row) {
+  if (!canResubmit(row.status)) {
+    ElMessage.warning('仅已驳回记录可重新提交')
+    return
+  }
 
-async function handleSaveEdit() {
-  if (!editFormRef.value) return
-
-  await editFormRef.value.validate(async (valid) => {
-    if (!valid) return
-
-    submitLoading.value = true
-    try {
-      const payload = {
-        workloadTitle: editForm.workloadTitle,
-        description: editForm.description,
-        amount: editForm.amount,
-        submitDate: editForm.submitDate
-      }
-      await request(`/api/workloads/${editForm.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(payload)
+  submitLoading.value = true
+  try {
+    await request(`/api/workloads/${row.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        status: 'PENDING',
+        rejectReason: ''
       })
-
-      ElMessage.success('编辑成功')
-      editVisible.value = false
-      await loadRows()
-    } catch (error) {
-      ElMessage.error(normalizeError(error, '编辑失败'))
-    } finally {
-      submitLoading.value = false
-    }
-  })
+    })
+    ElMessage.success('已重新提交，等待管理员审核')
+    await loadRows()
+  } catch (error) {
+    ElMessage.error(normalizeError(error, '重新提交失败'))
+  } finally {
+    submitLoading.value = false
+  }
 }
 
 async function handleDelete(id) {
@@ -288,6 +253,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .pagination-wrap {
