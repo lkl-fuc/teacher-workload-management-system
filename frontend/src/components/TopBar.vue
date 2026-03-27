@@ -20,7 +20,8 @@ const router = useRouter()
 const displayIdentity = computed(() => {
   const role = String(localStorage.getItem('role') || '').toUpperCase()
   const name = localStorage.getItem('name') || ''
-  const roleLabel = role === 'TEACHER' ? '教师' : '管理员'
+  const teacherPost = localStorage.getItem('teacherPost') || '行政岗'
+  const roleLabel = role === 'TEACHER' ? `教师（${teacherPost}）` : '管理员'
   return name ? `${roleLabel}：${name}` : roleLabel
 })
 
@@ -30,7 +31,9 @@ function logout() {
   localStorage.removeItem('userId')
   localStorage.removeItem('teacherId')
   localStorage.removeItem('role')
+  localStorage.removeItem('teacherPost')
   localStorage.removeItem('name')
+  localStorage.removeItem('username')
   router.push('/login')
 }
 </script>

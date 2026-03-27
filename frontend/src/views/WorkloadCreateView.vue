@@ -6,21 +6,18 @@
 
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 680px">
       <el-form-item label="工作类型" prop="typeId">
-        <el-select
-          v-model="form.typeId"
-          placeholder="请选择工作类型"
+        <el-cascader
+          v-model="selectedTypePath"
+          :options="typeTreeOptions"
+          :props="{ value: 'value', label: 'label', children: 'children', emitPath: true }"
+          placeholder="请选择【大类 -> 小类】"
           style="width: 100%"
           filterable
           clearable
-          :loading="typeLoading"
-        >
-          <el-option
-            v-for="item in typeOptions"
-            :key="item.id"
-            :label="typeLabel(item)"
-            :value="item.id"
-          />
-        </el-select>
+          :show-all-levels="true"
+          :disabled="typeLoading"
+          @change="handleTypePathChange"
+        />
       </el-form-item>
 
       <el-form-item v-if="isAdmin" label="分发教师" prop="teacherId">
@@ -95,6 +92,7 @@ const submitLoading = ref(false)
 const typeLoading = ref(false)
 const teacherLoading = ref(false)
 const typeOptions = ref([])
+const selectedTypePath = ref([])
 const teacherOptions = ref([])
 const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
 const isAdmin = computed(() => role.value === 'ADMIN')
@@ -115,6 +113,24 @@ const rules = computed(() => ({
   score: [{ required: true, message: '请输入分值', trigger: 'change' }],
   workDate: [{ required: true, message: '请选择工作日期', trigger: 'change' }]
 }))
+
+const typeTreeOptions = computed(() => {
+  const grouped = typeOptions.value.reduce((acc, item) => {
+    const category = item.categoryName || '未分类'
+    if (!acc[category]) acc[category] = []
+    acc[category].push(item)
+    return acc
+  }, {})
+
+  return Object.keys(grouped).map((category) => ({
+    value: `category-${category}`,
+    label: category,
+    children: grouped[category].map((item) => ({
+      value: item.id,
+      label: typeLabel(item)
+    }))
+  }))
+})
 
 function normalizeError(error, fallback) {
   if (error?.message) return error.message
@@ -151,10 +167,19 @@ async function request(url, options = {}) {
 function resetFormModel() {
   form.teacherId = null
   form.typeId = null
+  selectedTypePath.value = []
   form.title = ''
   form.score = 0
   form.description = ''
   form.workDate = ''
+}
+
+function handleTypePathChange(path) {
+  if (!Array.isArray(path) || path.length < 2) {
+    form.typeId = null
+    return
+  }
+  form.typeId = Number(path[path.length - 1]) || null
 }
 
 async function loadTypeOptions() {

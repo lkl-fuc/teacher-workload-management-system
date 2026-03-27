@@ -11,6 +11,7 @@ import TeacherProfileView from '../views/TeacherProfileView.vue'
 import TeacherScheduleView from '../views/TeacherScheduleView.vue'
 import TeacherNoticeView from '../views/TeacherNoticeView.vue'
 import AdminTeacherInfoView from '../views/AdminTeacherInfoView.vue'
+import TeacherPostTaskView from '../views/TeacherPostTaskView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 
 const routes = [
@@ -76,6 +77,12 @@ const routes = [
         name: 'teacherNotices',
         component: TeacherNoticeView,
         meta: { title: '通知公告', roles: ['TEACHER'] }
+      },
+      {
+        path: 'teacher/post-tasks',
+        name: 'teacherPostTasks',
+        component: TeacherPostTaskView,
+        meta: { title: '岗位任务面板', roles: ['TEACHER'] }
       },
       {
         path: 'teacher/schedule',

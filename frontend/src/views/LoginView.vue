@@ -17,6 +17,13 @@
             :placeholder="form.role === 'ADMIN' ? '请输入管理员用户名' : '请输入教师工号'"
           />
         </el-form-item>
+        <el-form-item v-if="form.role === 'TEACHER'" label="教师岗位">
+          <el-select v-model="form.teacherPost" placeholder="请选择岗位" style="width: 100%">
+            <el-option label="行政岗" value="行政岗" />
+            <el-option label="管理岗" value="管理岗" />
+            <el-option label="教辅岗" value="教辅岗" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="密码">
           <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
         </el-form-item>
@@ -39,7 +46,8 @@ const submitLoading = ref(false)
 const form = reactive({
   username: '',
   password: '',
-  role: 'TEACHER'
+  role: 'TEACHER',
+  teacherPost: '行政岗'
 })
 
 function normalizeError(error, fallback) {
@@ -76,6 +84,7 @@ function clearSession() {
   localStorage.removeItem('userId')
   localStorage.removeItem('teacherId')
   localStorage.removeItem('role')
+  localStorage.removeItem('teacherPost')
   localStorage.removeItem('name')
   localStorage.removeItem('username')
 }
@@ -110,6 +119,7 @@ async function handleLogin() {
     localStorage.setItem('username', result.username || form.username)
     if (String(result.role || form.role).toUpperCase() === 'TEACHER') {
       localStorage.setItem('teacherId', String(result.id))
+      localStorage.setItem('teacherPost', form.teacherPost)
     }
 
     ElMessage.success('登录成功')
