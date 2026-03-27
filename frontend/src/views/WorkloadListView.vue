@@ -31,8 +31,21 @@
     <el-table v-loading="tableLoading" :data="pagedRows" border>
       <el-table-column v-if="isAdmin" prop="teacherName" label="教师" width="140" />
       <el-table-column prop="workloadTitle" label="工作标题" min-width="180" show-overflow-tooltip />
-      <el-table-column prop="description" label="完成情况描述" min-width="220" show-overflow-tooltip />
-      <el-table-column prop="amount" label="分值" width="100" />
+      <el-table-column prop="descriptionText" label="完成情况描述" min-width="220" show-overflow-tooltip />
+      <el-table-column label="提交文件" width="130">
+        <template #default="scope">
+          <el-button
+            v-if="scope.row.fileUrl"
+            link
+            type="primary"
+            @click="openFileLink(scope.row.fileUrl)"
+          >
+            查看文件
+          </el-button>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column v-if="isAdmin" prop="amount" label="分值" width="100" />
       <el-table-column prop="submitDate" label="提交日期" width="120" />
       <el-table-column label="审核状态" width="120">
         <template #default="scope">
@@ -111,16 +124,12 @@
           placeholder="请填写任务完成情况"
         />
       </el-form-item>
-      <el-form-item label="完成分值" prop="amount">
-        <el-input-number
-          v-model="submitForm.amount"
-          :min="0"
-          :max="999999"
-          :precision="2"
-          :step="0.5"
-          controls-position="right"
-          style="width: 100%"
-        />
+      <el-form-item label="文件链接" prop="fileUrl">
+        <el-input v-model="submitForm.fileUrl" placeholder="请填写提交文件链接（可选）">
+          <template #append>
+            <el-button :disabled="!submitForm.fileUrl" @click="openFileLink(submitForm.fileUrl)">打开链接</el-button>
+          </template>
+        </el-input>
       </el-form-item>
       <el-form-item label="完成日期" prop="submitDate">
         <el-date-picker
@@ -181,6 +190,7 @@ const submitForm = reactive({
   id: null,
   description: '',
   amount: 0,
+  fileUrl: '',
   submitDate: ''
 })
 
@@ -193,7 +203,6 @@ const rejectForm = reactive({
 
 const submitRules = {
   description: [{ required: true, message: '请填写完成情况', trigger: 'blur' }],
-  amount: [{ required: true, message: '请填写完成分值', trigger: 'change' }],
   submitDate: [{ required: true, message: '请选择完成日期', trigger: 'change' }]
 }
 
@@ -245,10 +254,15 @@ async function request(url, options = {}) {
   return response.json()
 }
 
-const displayRows = computed(() => rows.value.map((item) => ({
-  ...item,
-  teacherName: teacherMap.value[item.teacherId] || `教师#${item.teacherId}`
-})))
+const displayRows = computed(() => rows.value.map((item) => {
+  const { descriptionText, fileUrl } = parseDescriptionAndFileUrl(item.description)
+  return {
+    ...item,
+    descriptionText,
+    fileUrl,
+    teacherName: teacherMap.value[item.teacherId] || `教师#${item.teacherId}`
+  }
+}))
 
 const filteredRows = computed(() => {
   const q = keyword.value.trim().toLowerCase()
@@ -323,6 +337,33 @@ function resolveTeacherId() {
   return null
 }
 
+
+function parseDescriptionAndFileUrl(description) {
+  const raw = String(description || '')
+  const marker = '[文件链接]'
+  const markerIndex = raw.lastIndexOf(marker)
+  if (markerIndex < 0) {
+    return { descriptionText: raw, fileUrl: '' }
+  }
+
+  const url = raw.slice(markerIndex + marker.length).trim()
+  const descriptionText = raw.slice(0, markerIndex).trim()
+  return { descriptionText, fileUrl: url }
+}
+
+function buildDescriptionWithFileUrl(description, fileUrl) {
+  const desc = String(description || '').trim()
+  const link = String(fileUrl || '').trim()
+  if (!link) return desc
+  return `${desc}\n\n[文件链接] ${link}`
+}
+
+function openFileLink(url) {
+  const link = String(url || '').trim()
+  if (!link) return
+  window.open(link, '_blank', 'noopener,noreferrer')
+}
+
 async function loadTeacherMap() {
   const data = await request('/api/teachers')
   const map = {}
@@ -357,9 +398,11 @@ async function loadRows() {
 }
 
 function openSubmitDialog(row) {
+  const { descriptionText, fileUrl } = parseDescriptionAndFileUrl(row.description)
   submitForm.id = row.id
-  submitForm.description = row.description || ''
+  submitForm.description = descriptionText
   submitForm.amount = Number(row.amount || 0)
+  submitForm.fileUrl = fileUrl
   submitForm.submitDate = row.submitDate || ''
   submitVisible.value = true
 }
@@ -377,7 +420,7 @@ async function handleTeacherSubmit() {
       await request(`/api/workloads/${submitForm.id}`, {
         method: 'PUT',
         body: JSON.stringify({
-          description: submitForm.description,
+          description: buildDescriptionWithFileUrl(submitForm.description, submitForm.fileUrl),
           amount: submitForm.amount,
           submitDate: submitForm.submitDate,
           status: 'PENDING',
