@@ -1,8 +1,11 @@
 <template>
-  <el-card>
+  <el-card class="type-card" shadow="never">
     <template #header>
       <div class="card-header">
-        <span>工作量类型管理（支持大类 + 细分项）</span>
+        <div class="header-title-group">
+          <span class="header-title">工作量类型管理</span>
+          <span class="header-subtitle">按「大类 - 小类」分组展示，支持快速维护。</span>
+        </div>
         <div class="header-actions">
           <el-button @click="seedDefaultTypes" :loading="seedLoading">一键生成建议类型</el-button>
           <el-button type="primary" @click="openCreateDialog">新增类型</el-button>
@@ -14,9 +17,12 @@
       v-loading="loading"
       :data="treeTableData"
       border
+      stripe
       row-key="rowKey"
       :tree-props="{ children: 'children' }"
       default-expand-all
+      class="type-table"
+      :row-class-name="getRowClassName"
     >
       <el-table-column prop="id" label="ID" width="80">
         <template #default="scope">
@@ -24,7 +30,19 @@
           <span v-else>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="categoryName" label="大类" min-width="120" />
+      <el-table-column prop="categoryName" label="大类" min-width="120">
+        <template #default="scope">
+          <el-tag
+            v-if="scope.row.categoryName"
+            :type="scope.row.isCategoryRow ? 'primary' : 'info'"
+            :effect="scope.row.isCategoryRow ? 'dark' : 'plain'"
+            round
+          >
+            {{ scope.row.categoryName }}
+          </el-tag>
+          <span v-else>—</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="subTypeName" label="细分类型" min-width="180">
         <template #default="scope">
           <span v-if="scope.row.isCategoryRow">请选择下拉箭头查看小类</span>
@@ -246,6 +264,10 @@ function handleCategoryChange() {
   syncTypeName()
 }
 
+function getRowClassName({ row }) {
+  return row.isCategoryRow ? 'category-row' : 'type-row'
+}
+
 watch(
   () => [form.categoryName, form.subTypeName],
   () => {
@@ -422,6 +444,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.type-card {
+  border: 0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
 .card-header {
   display: flex;
   align-items: center;
@@ -429,8 +457,52 @@ onMounted(() => {
   gap: 12px;
 }
 
+.header-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  color: #64748b;
+}
+
 .header-actions {
   display: flex;
   gap: 8px;
+}
+
+:deep(.type-table) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.type-table .category-row) {
+  font-weight: 600;
+  --el-table-tr-bg-color: #f8fafc;
+}
+
+:deep(.type-table .el-table__cell) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+:deep(.type-table th.el-table__cell) {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+@media (max-width: 960px) {
+  .card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 </style>
