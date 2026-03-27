@@ -20,7 +20,11 @@ public class TeacherDataInitializer {
                     buildTeacher("T002", "李四", "女", "13800138001", "lisi@example.com", "计算机学院", "副教授", "管理岗"),
                     buildTeacher("T003", "王五", "男", "13800138002", "wangwu@example.com", "软件学院", "讲师", "教辅岗"),
                     buildTeacher("T004", "赵六", "女", "13800138003", "zhaoliu@example.com", "人工智能学院", "副教授", "管理岗"),
-                    buildTeacher("T005", "孙七", "男", "13800138004", "sunqi@example.com", "数据科学学院", "教授", "行政岗")
+                    buildTeacher("T005", "孙七", "男", "13800138004", "sunqi@example.com", "数据科学学院", "教授", "行政岗"),
+                    buildTeacher("T006", "周敏", "女", "13800138005", "zhoumin@example.com", "计算机学院", "讲师", "管理岗"),
+                    buildTeacher("T007", "钱涛", "男", "13800138006", "qiantao@example.com", "软件学院", "副教授", "管理岗"),
+                    buildTeacher("T008", "吴婷", "女", "13800138007", "wuting@example.com", "人工智能学院", "讲师", "教辅岗"),
+                    buildTeacher("T009", "郑凯", "男", "13800138008", "zhengkai@example.com", "数据科学学院", "讲师", "教辅岗")
             );
 
             for (Teacher teacher : defaultTeachers) {
