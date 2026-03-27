@@ -37,4 +37,20 @@ public class WarningController {
                     .body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PostMapping("/{warningId}/acknowledge")
+    public ResponseEntity<?> acknowledgeWarning(@PathVariable Long warningId,
+                                                @RequestParam Long teacherId) {
+        try {
+            return ResponseEntity.ok(workloadWarningService.acknowledgeWarning(teacherId, warningId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/records")
+    public ResponseEntity<?> getWarningRecordsForAdmin() {
+        return ResponseEntity.ok(workloadWarningService.getWarningRecordsForAdmin());
+    }
 }

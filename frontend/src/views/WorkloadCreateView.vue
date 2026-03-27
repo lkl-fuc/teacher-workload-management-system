@@ -5,6 +5,32 @@
     </template>
 
     <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 680px">
+      <el-form-item v-if="isAdmin" label="分发教师" prop="teacherId">
+        <el-select
+          v-model="form.teacherId"
+          placeholder="请选择要分发的教师"
+          style="width: 100%"
+          filterable
+          clearable
+          :loading="teacherLoading"
+        >
+          <el-option
+            v-for="item in teacherOptions"
+            :key="item.id"
+            :label="`${item.name}（${item.teacherNo} / ${item.postType || '未设置岗位'}）`"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
+
+      <el-alert
+        v-if="matchedTypeHint"
+        class="mb-12"
+        type="success"
+        :closable="false"
+        :title="matchedTypeHint"
+      />
+
       <el-form-item label="工作类型" prop="typeId">
         <el-cascader
           v-model="selectedTypePath"
@@ -18,24 +44,6 @@
           :disabled="typeLoading"
           @change="handleTypePathChange"
         />
-      </el-form-item>
-
-      <el-form-item v-if="isAdmin" label="分发教师" prop="teacherId">
-        <el-select
-          v-model="form.teacherId"
-          placeholder="请选择要分发的教师"
-          style="width: 100%"
-          filterable
-          clearable
-          :loading="teacherLoading"
-        >
-          <el-option
-            v-for="item in teacherOptions"
-            :key="item.id"
-            :label="`${item.name}（${item.teacherNo}）`"
-            :value="item.id"
-          />
-        </el-select>
       </el-form-item>
 
       <el-form-item label="标题" prop="title">
@@ -84,7 +92,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 
 const formRef = ref()
@@ -114,8 +122,22 @@ const rules = computed(() => ({
   workDate: [{ required: true, message: '请选择工作日期', trigger: 'change' }]
 }))
 
+const currentTeacherPost = computed(() => {
+  if (!isAdmin.value) return localStorage.getItem('teacherPost') || '行政岗'
+  const teacher = teacherOptions.value.find((item) => Number(item.id) === Number(form.teacherId))
+  return teacher?.postType || ''
+})
+
+const filteredTypeOptions = computed(() => {
+  const post = normalizeText(currentTeacherPost.value)
+  if (!post) return typeOptions.value
+
+  const matched = typeOptions.value.filter((item) => matchPostType(item, post))
+  return matched.length > 0 ? matched : typeOptions.value
+})
+
 const typeTreeOptions = computed(() => {
-  const grouped = typeOptions.value.reduce((acc, item) => {
+  const grouped = filteredTypeOptions.value.reduce((acc, item) => {
     const category = item.categoryName || '未分类'
     if (!acc[category]) acc[category] = []
     acc[category].push(item)
@@ -130,6 +152,11 @@ const typeTreeOptions = computed(() => {
       label: typeLabel(item)
     }))
   }))
+})
+
+const matchedTypeHint = computed(() => {
+  if (!currentTeacherPost.value) return ''
+  return `当前将按【${currentTeacherPost.value}】岗位匹配任务类型并分发到教师端任务面板。`
 })
 
 function normalizeError(error, fallback) {
@@ -181,6 +208,14 @@ function handleTypePathChange(path) {
   }
   form.typeId = Number(path[path.length - 1]) || null
 }
+
+watch(
+  () => form.teacherId,
+  () => {
+    selectedTypePath.value = []
+    form.typeId = null
+  }
+)
 
 async function loadTypeOptions() {
   typeLoading.value = true
@@ -265,4 +300,28 @@ function typeLabel(item) {
   const scoreText = item.unitValue != null ? `（建议分值：${item.unitValue}）` : ''
   return `${nameText}${scoreText}`
 }
+
+function matchPostType(item, normalizedPost) {
+  const text = normalizeText([item.typeName, item.categoryName, item.subTypeName, item.remark].filter(Boolean).join(' '))
+  if (normalizedPost.includes('行政')) {
+    return ['行政', '管理', '服务', '支撑'].some((keyword) => text.includes(keyword))
+  }
+  if (normalizedPost.includes('管理')) {
+    return ['管理', '审核', '质量', '规划', '督导'].some((keyword) => text.includes(keyword))
+  }
+  if (normalizedPost.includes('教辅')) {
+    return ['教学', '教辅', '考试', '实验', '实训', '服务'].some((keyword) => text.includes(keyword))
+  }
+  return true
+}
+
+function normalizeText(text) {
+  return String(text || '').toLowerCase().replace(/\s+/g, '')
+}
 </script>
+
+<style scoped>
+.mb-12 {
+  margin-bottom: 12px;
+}
+</style>

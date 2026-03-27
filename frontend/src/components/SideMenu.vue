@@ -80,7 +80,7 @@ const baseTeacherMenu = [
     label: '个人工具',
     icon: User,
     children: [
-      { index: '/teacher/notices', label: '通知公告', icon: Bell },
+      { index: '/teacher/notices', label: '通知公告（预警）', icon: Bell },
       { index: '/teacher/profile', label: '个人信息', icon: User }
     ]
   }

@@ -10,6 +10,8 @@ public interface WarningRecordRepository extends JpaRepository<WarningRecord, Lo
 
     List<WarningRecord> findTop20ByTeacherIdOrderByCreateTimeDesc(Long teacherId);
 
+    List<WarningRecord> findTop200ByOrderByCreateTimeDesc();
+
     boolean existsByTeacherIdAndRuleIdAndWarningMessageAndStatus(Long teacherId,
                                                                  Long ruleId,
                                                                  String warningMessage,
