@@ -42,7 +42,14 @@ public class WorkloadTypeDataInitializer {
                     buildType("教学", "实验教学", "实验课教学", "7"),
                     buildType("教学", "实训教学", "实训课程教学", "8"),
                     buildType("教学", "课程设计", "课程设计指导", "9"),
-                    buildType("教学", "毕业设计（论文）指导", "毕业设计或毕业论文指导", "12")
+                    buildType("教学", "毕业设计（论文）指导", "毕业设计或毕业论文指导", "12"),
+
+                    buildType("行政事务", "流程执行", "行政岗流程执行类任务", "5"),
+                    buildType("行政事务", "数据上报", "行政岗统计上报类任务", "4"),
+                    buildType("管理工作", "审核监督", "管理岗审核监督类任务", "8"),
+                    buildType("管理工作", "战略规划", "管理岗统筹规划类任务", "9"),
+                    buildType("教辅服务", "教学保障", "教辅岗教学保障类任务", "6"),
+                    buildType("教辅服务", "实训支持", "教辅岗实训支持类任务", "7")
             );
 
             for (WorkloadType type : defaultTypes) {

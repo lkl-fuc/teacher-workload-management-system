@@ -19,12 +19,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class WorkloadWarningServiceImpl implements WorkloadWarningService {
@@ -55,16 +59,29 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
         List<Teacher> teachers = teacherRepository.findAll();
         Map<Long, Teacher> teacherMap = new HashMap<>();
         teachers.forEach(teacher -> teacherMap.put(teacher.getId(), teacher));
-        List<Workload> approvedWorkloads = workloadRepository.findByStatusIgnoreCase("APPROVED");
+        List<Workload> approvedWorkloads = workloadRepository.findAll().stream()
+                .filter(item -> {
+                    String status = emptyAsDefault(item.getStatus(), "").toUpperCase(Locale.ROOT);
+                    return "APPROVED".equals(status) || "DONE".equals(status) || "COMPLETED".equals(status);
+                })
+                .toList();
         Map<Long, WorkloadType> typeMap = new HashMap<>();
         workloadTypeRepository.findAll().forEach(type -> typeMap.put(type.getId(), type));
 
         Map<Long, BigDecimal> totalByTeacher = new HashMap<>();
         Map<Long, BigDecimal> equivalentByTeacher = new HashMap<>();
 
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.with(DayOfWeek.MONDAY);
+        LocalDate weekEnd = today.with(DayOfWeek.SUNDAY);
+
         for (Workload workload : approvedWorkloads) {
             Long teacherId = workload.getTeacherId();
             if (teacherId == null) {
+                continue;
+            }
+            LocalDate submitDate = workload.getSubmitDate();
+            if (submitDate == null || submitDate.isBefore(weekStart) || submitDate.isAfter(weekEnd)) {
                 continue;
             }
             BigDecimal amount = workload.getAmount() == null ? BigDecimal.ZERO : workload.getAmount();
@@ -138,6 +155,44 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
             throw new IllegalArgumentException("教师不存在，id=" + teacherId);
         }
         return warningRecordRepository.findTop20ByTeacherIdOrderByCreateTimeDesc(teacherId);
+    }
+
+    @Override
+    @Transactional
+    public WarningRecord acknowledgeWarning(Long teacherId, Long warningId) {
+        if (!teacherRepository.existsById(teacherId)) {
+            throw new IllegalArgumentException("教师不存在，id=" + teacherId);
+        }
+        WarningRecord record = warningRecordRepository.findById(warningId)
+                .orElseThrow(() -> new IllegalArgumentException("预警记录不存在，id=" + warningId));
+        if (!teacherId.equals(record.getTeacherId())) {
+            throw new IllegalArgumentException("仅可确认本人预警消息");
+        }
+        if (!"ACKED".equalsIgnoreCase(emptyAsDefault(record.getStatus(), ""))) {
+            record.setStatus("ACKED");
+            record = warningRecordRepository.save(record);
+        }
+        return record;
+    }
+
+    @Override
+    public List<Map<String, Object>> getWarningRecordsForAdmin() {
+        Map<Long, Teacher> teacherMap = teacherRepository.findAll().stream()
+                .collect(Collectors.toMap(Teacher::getId, teacher -> teacher, (left, right) -> left));
+        return warningRecordRepository.findTop200ByOrderByCreateTimeDesc().stream()
+                .map(record -> {
+                    Teacher teacher = teacherMap.get(record.getTeacherId());
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("id", record.getId());
+                    row.put("teacherId", record.getTeacherId());
+                    row.put("teacherName", teacher == null ? "未知教师" : emptyAsDefault(teacher.getName(), "未命名"));
+                    row.put("teacherPostType", teacher == null ? "-" : emptyAsDefault(teacher.getPostType(), "-"));
+                    row.put("warningMessage", emptyAsDefault(record.getWarningMessage(), ""));
+                    row.put("status", emptyAsDefault(record.getStatus(), "NEW"));
+                    row.put("createTime", record.getCreateTime());
+                    return row;
+                })
+                .toList();
     }
 
     private WarningRule resolveThresholdRule(String postType) {

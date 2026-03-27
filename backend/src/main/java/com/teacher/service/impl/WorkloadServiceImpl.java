@@ -1,6 +1,7 @@
 package com.teacher.service.impl;
 
 import com.teacher.entity.Workload;
+import com.teacher.entity.WorkloadType;
 import com.teacher.repository.TeacherRepository;
 import com.teacher.repository.WorkloadRepository;
 import com.teacher.repository.WorkloadTypeRepository;
@@ -9,6 +10,7 @@ import com.teacher.service.WorkloadWarningService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
 import java.util.List;
 
 @Service
@@ -44,7 +46,7 @@ public class WorkloadServiceImpl implements WorkloadService {
     @Transactional
     public Workload createWorkload(Workload workload) {
         validateRequiredFields(workload);
-        validateRelation(workload.getTeacherId(), workload.getTypeId());
+        validateRelation(workload.getTeacherId(), workload.getTypeId(), true);
 
         workload.setId(null);
         return workloadRepository.save(workload);
@@ -68,7 +70,7 @@ public class WorkloadServiceImpl implements WorkloadService {
             existing.setTypeId(workload.getTypeId());
         }
 
-        validateRelation(teacherIdToCheck, typeIdToCheck);
+        validateRelation(teacherIdToCheck, typeIdToCheck, false);
 
         if (workload.getWorkloadTitle() != null) {
             existing.setWorkloadTitle(workload.getWorkloadTitle());
@@ -126,7 +128,7 @@ public class WorkloadServiceImpl implements WorkloadService {
         }
     }
 
-    private void validateRelation(Long teacherId, Long typeId) {
+    private void validateRelation(Long teacherId, Long typeId, boolean strictPostMatch) {
         if (teacherId == null) {
             throw new IllegalArgumentException("teacherId 不能为空");
         }
@@ -139,5 +141,42 @@ public class WorkloadServiceImpl implements WorkloadService {
         if (!workloadTypeRepository.existsById(typeId)) {
             throw new IllegalArgumentException("工作量类型不存在，id=" + typeId);
         }
+
+        if (strictPostMatch) {
+            String postType = teacherRepository.findById(teacherId)
+                    .map(teacher -> teacher.getPostType())
+                    .orElse("");
+            WorkloadType type = workloadTypeRepository.findById(typeId).orElse(null);
+            if (!matchesPostType(postType, type)) {
+                throw new IllegalArgumentException("任务类型与教师岗位不匹配，请选择对应岗位任务");
+            }
+        }
+    }
+
+    private boolean matchesPostType(String postType, WorkloadType type) {
+        String post = normalize(postType);
+        if (post.isBlank() || type == null) return true;
+        String keywords = String.join(" ",
+                normalize(type.getTypeName()),
+                normalize(type.getCategoryName()),
+                normalize(type.getSubTypeName()),
+                normalize(type.getRemark())
+        );
+
+        if (post.contains("行政")) {
+            return keywords.contains("管理") || keywords.contains("行政") || keywords.contains("服务") || keywords.contains("支撑");
+        }
+        if (post.contains("管理")) {
+            return keywords.contains("管理") || keywords.contains("审核") || keywords.contains("质量") || keywords.contains("规划");
+        }
+        if (post.contains("教辅")) {
+            return keywords.contains("教学") || keywords.contains("教辅") || keywords.contains("考试") || keywords.contains("实验") || keywords.contains("实训");
+        }
+        return true;
+    }
+
+    private String normalize(String value) {
+        if (value == null) return "";
+        return value.toLowerCase(Locale.ROOT).replace(" ", "");
     }
 }

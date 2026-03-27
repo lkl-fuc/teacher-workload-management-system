@@ -71,6 +71,29 @@
       </el-table>
     </el-card>
 
+    <el-card>
+      <template #header>
+        <div class="header-row">
+          <span>教师预警回执追踪</span>
+          <el-button type="primary" :loading="warningLoading" @click="loadWarningRecords">刷新</el-button>
+        </div>
+      </template>
+      <el-table v-loading="warningLoading" :data="warningRows" border>
+        <el-table-column prop="teacherName" label="教师" min-width="120" />
+        <el-table-column prop="teacherPostType" label="岗位" min-width="100" />
+        <el-table-column prop="warningMessage" label="预警内容" min-width="300" show-overflow-tooltip />
+        <el-table-column prop="createTime" label="预警时间" width="180" />
+        <el-table-column label="回执状态" width="120">
+          <template #default="scope">
+            <el-tag :type="String(scope.row.status || '').toUpperCase() === 'ACKED' ? 'success' : 'warning'">
+              {{ String(scope.row.status || '').toUpperCase() === 'ACKED' ? '教师已收到' : '待教师确认' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-empty v-if="!warningLoading && warningRows.length === 0" description="暂无预警回执记录" />
+    </el-card>
+
     <el-dialog v-model="rejectVisible" title="驳回原因" width="500px" destroy-on-close>
       <el-form ref="rejectFormRef" :model="rejectForm" :rules="rejectRules" label-width="90px">
         <el-form-item label="驳回原因" prop="rejectReason">
@@ -106,7 +129,9 @@ import { ElMessage } from 'element-plus'
 const rows = ref([])
 const tableLoading = ref(false)
 const analysisLoading = ref(false)
+const warningLoading = ref(false)
 const analysis = ref({ summary: {}, items: [] })
+const warningRows = ref([])
 const analysisChartRef = ref(null)
 let analysisChart
 let echartsLib
@@ -234,6 +259,18 @@ async function loadAnalysis() {
     ElMessage.error(normalizeError(error, '加载预警分析失败'))
   } finally {
     analysisLoading.value = false
+  }
+}
+
+async function loadWarningRecords() {
+  warningLoading.value = true
+  try {
+    const data = await request('/api/warnings/records')
+    warningRows.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    ElMessage.error(normalizeError(error, '加载预警回执失败'))
+  } finally {
+    warningLoading.value = false
   }
 }
 
@@ -366,7 +403,7 @@ function handleResize() {
 
 onMounted(async () => {
   await Promise.all([loadPendingRows(), loadEchartsScript()])
-  await loadAnalysis()
+  await Promise.all([loadAnalysis(), loadWarningRecords()])
   window.addEventListener('resize', handleResize)
 })
 
