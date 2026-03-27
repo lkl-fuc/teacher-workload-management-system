@@ -10,17 +10,37 @@
       </div>
     </template>
 
-    <el-table v-loading="loading" :data="tableData" border>
-      <el-table-column prop="id" label="ID" width="80" />
+    <el-table
+      v-loading="loading"
+      :data="treeTableData"
+      border
+      row-key="rowKey"
+      :tree-props="{ children: 'children' }"
+      default-expand-all
+    >
+      <el-table-column prop="id" label="ID" width="80">
+        <template #default="scope">
+          <span v-if="scope.row.isCategoryRow">—</span>
+          <span v-else>{{ scope.row.id }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="categoryName" label="大类" min-width="120" />
-      <el-table-column prop="subTypeName" label="细分类型" min-width="180" />
+      <el-table-column prop="subTypeName" label="细分类型" min-width="180">
+        <template #default="scope">
+          <span v-if="scope.row.isCategoryRow">请选择下拉箭头查看小类</span>
+          <span v-else>{{ scope.row.subTypeName }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="typeName" label="显示名称" min-width="220" show-overflow-tooltip />
       <el-table-column prop="unitValue" label="单位分值" min-width="110" />
       <el-table-column prop="remark" label="备注" min-width="220" show-overflow-tooltip />
       <el-table-column label="操作" width="180" fixed="right">
         <template #default="scope">
-          <el-button link type="primary" @click="openEditDialog(scope.row)">编辑</el-button>
-          <el-button link type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          <template v-if="!scope.row.isCategoryRow">
+            <el-button link type="primary" @click="openEditDialog(scope.row)">编辑</el-button>
+            <el-button link type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          </template>
+          <span v-else>—</span>
         </template>
       </el-table-column>
     </el-table>
@@ -156,6 +176,42 @@ const rules = {
 }
 
 const API_BASE = '/api/workload-types'
+
+
+const treeTableData = computed(() => {
+  const grouped = new Map()
+  const uncategorized = []
+
+  tableData.value.forEach((item) => {
+    const categoryName = String(item.categoryName || '').trim()
+    if (!categoryName) {
+      uncategorized.push({ ...item, rowKey: `type-${item.id}`, isCategoryRow: false })
+      return
+    }
+
+    if (!grouped.has(categoryName)) {
+      grouped.set(categoryName, [])
+    }
+
+    grouped.get(categoryName).push({ ...item, rowKey: `type-${item.id}`, isCategoryRow: false })
+  })
+
+  const categoryRows = [...grouped.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, 'zh-Hans-CN'))
+    .map(([categoryName, children]) => ({
+      id: null,
+      rowKey: `category-${categoryName}`,
+      isCategoryRow: true,
+      categoryName,
+      subTypeName: '',
+      typeName: '',
+      unitValue: '',
+      remark: '',
+      children: children.sort((a, b) => String(a.subTypeName || '').localeCompare(String(b.subTypeName || ''), 'zh-Hans-CN'))
+    }))
+
+  return [...uncategorized, ...categoryRows]
+})
 
 const categoryOptions = computed(() => {
   const fromTable = tableData.value.map((item) => item.categoryName).filter(Boolean)
