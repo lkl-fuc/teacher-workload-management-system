@@ -138,8 +138,12 @@ const filteredWorkloads = computed(() => {
   return workloads.value.filter((item) => item.submitDate?.startsWith(selectedYear.value))
 })
 
-const teacherStats = computed(() => aggregateStats(filteredWorkloads.value, 'teacherId', teacherMap.value, '未知教师'))
-const typeStats = computed(() => aggregateStats(filteredWorkloads.value, 'typeId', typeMap.value, '未知类型'))
+const hasType = (typeId) => typeId !== null && typeId !== undefined && typeMap.value.has(String(typeId))
+
+const validWorkloads = computed(() => filteredWorkloads.value.filter((item) => hasType(item.typeId)))
+
+const teacherStats = computed(() => aggregateStats(validWorkloads.value, 'teacherId', teacherMap.value, '未知教师'))
+const typeStats = computed(() => aggregateStats(validWorkloads.value, 'typeId', typeMap.value, '未知类型'))
 
 const monthStats = computed(() => {
   const result = Array.from({ length: 12 }, (_, index) => ({
@@ -147,7 +151,7 @@ const monthStats = computed(() => {
     value: 0
   }))
 
-  filteredWorkloads.value.forEach((item) => {
+  validWorkloads.value.forEach((item) => {
     if (!item.submitDate) return
     const month = Number(item.submitDate.split('-')[1])
     if (month >= 1 && month <= 12) {
@@ -159,8 +163,8 @@ const monthStats = computed(() => {
 })
 
 const statsSummary = computed(() => ({
-  totalCount: filteredWorkloads.value.length,
-  totalAmount: filteredWorkloads.value.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+  totalCount: validWorkloads.value.length,
+  totalAmount: validWorkloads.value.reduce((sum, item) => sum + Number(item.amount || 0), 0)
 }))
 
 function resolveTeacherId() {
