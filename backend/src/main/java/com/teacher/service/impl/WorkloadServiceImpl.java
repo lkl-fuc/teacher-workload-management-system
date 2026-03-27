@@ -5,6 +5,7 @@ import com.teacher.repository.TeacherRepository;
 import com.teacher.repository.WorkloadRepository;
 import com.teacher.repository.WorkloadTypeRepository;
 import com.teacher.service.WorkloadService;
+import com.teacher.service.WorkloadWarningService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,13 +17,16 @@ public class WorkloadServiceImpl implements WorkloadService {
     private final WorkloadRepository workloadRepository;
     private final TeacherRepository teacherRepository;
     private final WorkloadTypeRepository workloadTypeRepository;
+    private final WorkloadWarningService workloadWarningService;
 
     public WorkloadServiceImpl(WorkloadRepository workloadRepository,
                                TeacherRepository teacherRepository,
-                               WorkloadTypeRepository workloadTypeRepository) {
+                               WorkloadTypeRepository workloadTypeRepository,
+                               WorkloadWarningService workloadWarningService) {
         this.workloadRepository = workloadRepository;
         this.teacherRepository = teacherRepository;
         this.workloadTypeRepository = workloadTypeRepository;
+        this.workloadWarningService = workloadWarningService;
     }
 
     @Override
@@ -85,7 +89,12 @@ public class WorkloadServiceImpl implements WorkloadService {
             existing.setRejectReason(workload.getRejectReason());
         }
 
-        return workloadRepository.save(existing);
+        Workload saved = workloadRepository.save(existing);
+        String status = existing.getStatus() == null ? "" : existing.getStatus().toUpperCase();
+        if ("APPROVED".equals(status) || "REJECTED".equals(status)) {
+            workloadWarningService.analyzeTeacherWorkloads(true);
+        }
+        return saved;
     }
 
     @Override
