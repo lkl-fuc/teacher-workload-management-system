@@ -30,6 +30,9 @@ public class Teacher {
 
     private String title;
 
+    @Column(name = "post_type")
+    private String postType;
+
     private Integer status;
 
     @Column(name = "create_time", insertable = false, updatable = false)
