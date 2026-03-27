@@ -114,7 +114,9 @@ let echartsLib
 const teacherMap = computed(() => {
   const map = new Map()
   teachers.value.forEach((item) => {
-    map.set(item.id, item.name)
+    if (item.id !== null && item.id !== undefined) {
+      map.set(String(item.id), item.name)
+    }
   })
   return map
 })
@@ -122,7 +124,9 @@ const teacherMap = computed(() => {
 const typeMap = computed(() => {
   const map = new Map()
   workloadTypes.value.forEach((item) => {
-    map.set(item.id, item.typeName)
+    if (item.id !== null && item.id !== undefined) {
+      map.set(String(item.id), item.typeName)
+    }
   })
   return map
 })
@@ -135,7 +139,7 @@ const filteredWorkloads = computed(() => {
 })
 
 const teacherStats = computed(() => aggregateStats(filteredWorkloads.value, 'teacherId', teacherMap.value, '未知教师'))
-const typeStats = computed(() => aggregateStats(filteredWorkloads.value, 'typeId', typeMap.value, '清空'))
+const typeStats = computed(() => aggregateStats(filteredWorkloads.value, 'typeId', typeMap.value, '未知类型'))
 
 const monthStats = computed(() => {
   const result = Array.from({ length: 12 }, (_, index) => ({
@@ -207,8 +211,9 @@ function loadEchartsScript() {
 function aggregateStats(list, field, labelMap, fallbackName) {
   const map = new Map()
   list.forEach((item) => {
-    const key = item[field] ?? `unknown_${field}`
-    const label = labelMap.get(item[field]) || fallbackName
+    const rawKey = item[field]
+    const key = rawKey !== null && rawKey !== undefined ? String(rawKey) : `unknown_${field}`
+    const label = labelMap.get(key) || (rawKey !== null && rawKey !== undefined ? `${fallbackName}#${rawKey}` : fallbackName)
     const current = map.get(key) || { name: label, value: 0 }
     current.value += Number(item.amount || 0)
     map.set(key, current)
