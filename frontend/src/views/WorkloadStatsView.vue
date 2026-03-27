@@ -135,7 +135,7 @@ const filteredWorkloads = computed(() => {
 })
 
 const teacherStats = computed(() => aggregateStats(filteredWorkloads.value, 'teacherId', teacherMap.value, '未知教师'))
-const typeStats = computed(() => aggregateStats(filteredWorkloads.value, 'typeId', typeMap.value, '未知类型'))
+const typeStats = computed(() => aggregateStats(filteredWorkloads.value, 'typeId', typeMap.value, '清空'))
 
 const monthStats = computed(() => {
   const result = Array.from({ length: 12 }, (_, index) => ({
