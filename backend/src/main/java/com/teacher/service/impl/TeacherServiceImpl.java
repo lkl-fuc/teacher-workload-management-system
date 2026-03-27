@@ -76,6 +76,9 @@ public class TeacherServiceImpl implements TeacherService {
         if (teacher.getTitle() != null) {
             existing.setTitle(teacher.getTitle());
         }
+        if (teacher.getPostType() != null) {
+            existing.setPostType(teacher.getPostType());
+        }
         if (teacher.getStatus() != null) {
             existing.setStatus(teacher.getStatus());
         }

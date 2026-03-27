@@ -50,6 +50,11 @@ public class AuthController {
                     response.setUsername(teacher.getTeacherNo());
                     response.setName(teacher.getName());
                     response.setRole("TEACHER");
+                    response.setTeacherPost(
+                            teacher.getPostType() == null || teacher.getPostType().isBlank()
+                                    ? "行政岗"
+                                    : teacher.getPostType()
+                    );
                     return response;
                 }
             }
