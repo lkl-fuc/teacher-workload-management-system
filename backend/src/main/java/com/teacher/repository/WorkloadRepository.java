@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface WorkloadRepository extends JpaRepository<Workload, Long> {
     List<Workload> findByTeacherId(Long teacherId);
+
+    List<Workload> findByStatusIgnoreCase(String status);
 }

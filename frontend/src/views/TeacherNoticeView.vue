@@ -86,8 +86,22 @@ async function loadWorkloadNotices() {
   notices.value = [...workloadNotices, ...notices.value]
 }
 
+async function loadWarningNotices() {
+  const teacherId = resolveTeacherId()
+  if (!teacherId) return
+  const data = await request(`/api/warnings/teacher/${teacherId}`)
+  const warningNotices = (Array.isArray(data) ? data : []).map((item) => ({
+    date: item.createTime ? item.createTime.replace('T', ' ').slice(0, 16) : '实时',
+    title: '工作量负荷预警',
+    content: item.warningMessage || '系统检测到工作量异常，请及时确认。',
+    type: 'warning'
+  }))
+
+  notices.value = [...warningNotices, ...notices.value]
+}
+
 onMounted(() => {
-  loadWorkloadNotices()
+  Promise.allSettled([loadWorkloadNotices(), loadWarningNotices()])
 })
 </script>
 
