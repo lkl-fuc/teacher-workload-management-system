@@ -91,7 +91,7 @@ const teacherPostMenus = {
     { index: '/teacher/schedule', label: '值班安排', icon: Calendar }
   ],
   管理岗: [
-    { index: '/teacher/post-tasks', label: '部门任务审核看板', icon: Finished }
+    { index: '/teacher/schedule', label: '值班安排', icon: Calendar }
   ],
   教辅岗: [
     { index: '/teacher/post-tasks', label: '教辅服务任务看板', icon: Plus }
