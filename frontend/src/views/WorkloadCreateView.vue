@@ -17,7 +17,7 @@
           <el-option
             v-for="item in typeOptions"
             :key="item.id"
-            :label="item.typeName"
+            :label="typeLabel(item)"
             :value="item.id"
           />
         </el-select>
@@ -232,4 +232,12 @@ onMounted(() => {
   loadTypeOptions()
   loadTeacherOptions()
 })
+
+function typeLabel(item) {
+  const categoryText = item.categoryName ? `${item.categoryName}` : ''
+  const subTypeText = item.subTypeName ? `${item.subTypeName}` : ''
+  const nameText = item.typeName || [categoryText, subTypeText].filter(Boolean).join(' - ')
+  const scoreText = item.unitValue != null ? `（建议分值：${item.unitValue}）` : ''
+  return `${nameText}${scoreText}`
+}
 </script>

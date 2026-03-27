@@ -16,6 +16,12 @@ public class WorkloadType {
     @Column(name = "type_name")
     private String typeName;
 
+    @Column(name = "category_name")
+    private String categoryName;
+
+    @Column(name = "sub_type_name")
+    private String subTypeName;
+
     @Column(name = "unit_value")
     private BigDecimal unitValue;
 
