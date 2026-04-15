@@ -132,8 +132,7 @@ const filteredTypeOptions = computed(() => {
   const post = normalizeText(currentTeacherPost.value)
   if (!post) return typeOptions.value
 
-  const matched = typeOptions.value.filter((item) => matchPostType(item, post))
-  return matched.length > 0 ? matched : typeOptions.value
+  return typeOptions.value.filter((item) => matchPostType(item, post))
 })
 
 const typeTreeOptions = computed(() => {
@@ -302,14 +301,24 @@ function typeLabel(item) {
 }
 
 function matchPostType(item, normalizedPost) {
-  const text = normalizeText([item.typeName, item.categoryName, item.subTypeName, item.remark].filter(Boolean).join(' '))
-  if (normalizedPost.includes('专任教师')) return ['教学', '授课', '课程', '教研'].some((keyword) => text.includes(keyword))
-  if (normalizedPost.includes('实验教师')) return ['实验', '实验室', '实训', '指导', '教学'].some((keyword) => text.includes(keyword))
-  if (normalizedPost.includes('辅导员')) return ['学生', '思政', '教育', '班会', '事务'].some((keyword) => text.includes(keyword))
-  if (normalizedPost.includes('教辅')) return ['教辅', '图书', '设备', '秘书', '保障', '服务'].some((keyword) => text.includes(keyword))
-  if (normalizedPost.includes('行政兼课')) return ['行政', '管理', '教学', '授课'].some((keyword) => text.includes(keyword))
-  if (normalizedPost.includes('外聘教师')) return ['外聘', '授课', '教学', '课程', '答疑'].some((keyword) => text.includes(keyword))
-  return true
+  const category = normalizeText(item.categoryName)
+  const postAliases = getPostAliases(normalizedPost)
+  if (postAliases.length === 0) return true
+  return postAliases.some((alias) => category.includes(alias))
+}
+
+function getPostAliases(normalizedPost) {
+  const relation = [
+    { aliases: ['专任教师岗', '专任教师'], keywords: ['专任教师岗', '专任教师'] },
+    { aliases: ['实验教师岗', '实验教师'], keywords: ['实验教师岗', '实验教师'] },
+    { aliases: ['辅导岗', '辅导员岗', '辅导员'], keywords: ['辅导岗', '辅导员岗', '辅导员'] },
+    { aliases: ['教辅岗', '教辅'], keywords: ['教辅岗', '教辅'] },
+    { aliases: ['行政兼课岗', '行政兼课'], keywords: ['行政兼课岗', '行政兼课'] },
+    { aliases: ['外聘教师岗', '外聘教师'], keywords: ['外聘教师岗', '外聘教师'] }
+  ]
+
+  const matched = relation.find((item) => item.keywords.some((keyword) => normalizedPost.includes(normalizeText(keyword))))
+  return matched ? matched.aliases.map((alias) => normalizeText(alias)) : []
 }
 
 function normalizeText(text) {
