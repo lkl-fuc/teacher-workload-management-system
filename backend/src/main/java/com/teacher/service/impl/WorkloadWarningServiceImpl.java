@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,9 +70,7 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
         Map<Long, BigDecimal> totalByTeacher = new HashMap<>();
         Map<Long, BigDecimal> equivalentByTeacher = new HashMap<>();
 
-        LocalDate today = LocalDate.now();
-        LocalDate weekStart = today.with(DayOfWeek.MONDAY);
-        LocalDate weekEnd = today.with(DayOfWeek.SUNDAY);
+        int currentYear = LocalDate.now().getYear();
 
         for (Workload workload : approvedWorkloads) {
             Long teacherId = workload.getTeacherId();
@@ -81,7 +78,7 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
                 continue;
             }
             LocalDate submitDate = workload.getSubmitDate();
-            if (submitDate == null || submitDate.isBefore(weekStart) || submitDate.isAfter(weekEnd)) {
+            if (submitDate == null || submitDate.getYear() != currentYear) {
                 continue;
             }
             BigDecimal amount = workload.getAmount() == null ? BigDecimal.ZERO : workload.getAmount();
