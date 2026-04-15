@@ -138,12 +138,10 @@ const filteredWorkloads = computed(() => {
   return workloads.value.filter((item) => item.submitDate?.startsWith(selectedYear.value))
 })
 
-const hasType = (typeId) => typeId !== null && typeId !== undefined && typeMap.value.has(String(typeId))
-
-const validWorkloads = computed(() => filteredWorkloads.value.filter((item) => hasType(item.typeId)))
+const validWorkloads = computed(() => filteredWorkloads.value)
 
 const teacherStats = computed(() => aggregateStats(validWorkloads.value, 'teacherId', teacherMap.value, '未知教师'))
-const typeStats = computed(() => aggregateStats(validWorkloads.value, 'typeId', typeMap.value, '未知类型'))
+const typeStats = computed(() => aggregateStats(validWorkloads.value, 'typeId', typeMap.value, '岗位任务'))
 
 const monthStats = computed(() => {
   const result = Array.from({ length: 12 }, (_, index) => ({
