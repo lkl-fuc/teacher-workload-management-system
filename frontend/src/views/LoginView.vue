@@ -111,7 +111,7 @@ async function handleLogin() {
     localStorage.setItem('username', result.username || form.username)
     if (String(result.role || form.role).toUpperCase() === 'TEACHER') {
       localStorage.setItem('teacherId', String(result.id))
-      localStorage.setItem('teacherPost', result.teacherPost || '行政岗')
+      localStorage.setItem('teacherPost', result.teacherPost || '专任教师岗')
     }
 
     ElMessage.success('登录成功')

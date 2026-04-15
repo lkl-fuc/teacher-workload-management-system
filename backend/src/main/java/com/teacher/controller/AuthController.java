@@ -52,7 +52,7 @@ public class AuthController {
                     response.setRole("TEACHER");
                     response.setTeacherPost(
                             teacher.getPostType() == null || teacher.getPostType().isBlank()
-                                    ? "行政岗"
+                                    ? "专任教师岗"
                                     : teacher.getPostType()
                     );
                     return response;
