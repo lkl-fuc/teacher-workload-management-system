@@ -74,11 +74,9 @@
       <el-form-item label="工作大类" prop="categoryName">
         <el-select
           v-model="form.categoryName"
-          allow-create
           filterable
-          default-first-option
           clearable
-          placeholder="请选择或输入大类"
+          placeholder="请选择工作大类"
           style="width: 100%"
           @change="handleCategoryChange"
         >
@@ -145,37 +143,33 @@ const currentId = ref(null)
 const formRef = ref()
 
 const categoryDict = {
-  论文: ['SCI', 'EI', 'CSSCI', '普通期刊', '会议论文'],
-  项目: ['国家级', '省部级', '厅局级', '校级'],
-  专利: ['发明专利', '实用新型专利', '外观设计专利', '国际专利', '软件著作权'],
-  竞赛: ['教学能力竞赛', '说课比赛', '微课比赛', '青教赛'],
-  教学: ['理论教学', '实验教学', '实训教学', '课程设计', '毕业设计（论文）指导']
+  专任教师岗: ['课堂授课', '教学准备', '教研活动'],
+  实验教师岗: ['实验教学', '实验室指导', '实验室安全维护'],
+  辅导员岗: ['学生管理', '思想教育', '日常事务'],
+  教辅岗: ['图书资源服务', '设备保障服务', '教学秘书支持'],
+  行政兼课岗: ['行政管理事务', '兼课教学任务', '行政教学协同'],
+  外聘教师岗: ['外聘授课', '课程考核', '答疑辅导']
 }
 
 const defaultTypeList = [
-  { categoryName: '论文', subTypeName: 'SCI', unitValue: 25, remark: '高质量国际检索论文' },
-  { categoryName: '论文', subTypeName: 'EI', unitValue: 20, remark: '工程索引收录论文' },
-  { categoryName: '论文', subTypeName: 'CSSCI', unitValue: 16, remark: 'CSSCI来源期刊论文' },
-  { categoryName: '论文', subTypeName: '普通期刊', unitValue: 10, remark: '一般中文期刊论文' },
-  { categoryName: '论文', subTypeName: '会议论文', unitValue: 8, remark: '学术会议论文' },
-  { categoryName: '项目', subTypeName: '国家级', unitValue: 30, remark: '国家级纵向项目' },
-  { categoryName: '项目', subTypeName: '省部级', unitValue: 20, remark: '省部级项目' },
-  { categoryName: '项目', subTypeName: '厅局级', unitValue: 12, remark: '厅局级项目' },
-  { categoryName: '项目', subTypeName: '校级', unitValue: 8, remark: '校级教改或科研项目' },
-  { categoryName: '专利', subTypeName: '发明专利', unitValue: 24, remark: '已授权发明专利' },
-  { categoryName: '专利', subTypeName: '实用新型专利', unitValue: 12, remark: '已授权实用新型专利' },
-  { categoryName: '专利', subTypeName: '外观设计专利', unitValue: 8, remark: '已授权外观设计专利' },
-  { categoryName: '专利', subTypeName: '国际专利', unitValue: 30, remark: 'PCT或境外授权专利' },
-  { categoryName: '专利', subTypeName: '软件著作权', unitValue: 10, remark: '软件著作权登记' },
-  { categoryName: '竞赛', subTypeName: '教学能力竞赛', unitValue: 12, remark: '教师教学能力类竞赛' },
-  { categoryName: '竞赛', subTypeName: '说课比赛', unitValue: 8, remark: '说课类竞赛' },
-  { categoryName: '竞赛', subTypeName: '微课比赛', unitValue: 8, remark: '微课制作比赛' },
-  { categoryName: '竞赛', subTypeName: '青教赛', unitValue: 12, remark: '青年教师教学竞赛' },
-  { categoryName: '教学', subTypeName: '理论教学', unitValue: 6, remark: '理论课课堂教学' },
-  { categoryName: '教学', subTypeName: '实验教学', unitValue: 7, remark: '实验课教学' },
-  { categoryName: '教学', subTypeName: '实训教学', unitValue: 8, remark: '实训课程教学' },
-  { categoryName: '教学', subTypeName: '课程设计', unitValue: 9, remark: '课程设计指导' },
-  { categoryName: '教学', subTypeName: '毕业设计（论文）指导', unitValue: 12, remark: '毕业设计或毕业论文指导' }
+  { categoryName: '专任教师岗', subTypeName: '课堂授课', unitValue: 8, remark: '专任教师每周授课工作量' },
+  { categoryName: '专任教师岗', subTypeName: '教学准备', unitValue: 4, remark: '教案、备课与课程资源建设' },
+  { categoryName: '专任教师岗', subTypeName: '教研活动', unitValue: 5, remark: '教研会议、听评课与教学改进' },
+  { categoryName: '实验教师岗', subTypeName: '实验教学', unitValue: 8, remark: '实验课程教学与课堂组织' },
+  { categoryName: '实验教师岗', subTypeName: '实验室指导', unitValue: 6, remark: '实验项目指导与答疑' },
+  { categoryName: '实验教师岗', subTypeName: '实验室安全维护', unitValue: 5, remark: '实验室安全巡检与设备管理' },
+  { categoryName: '辅导员岗', subTypeName: '学生管理', unitValue: 6, remark: '学生日常管理与数据维护' },
+  { categoryName: '辅导员岗', subTypeName: '思想教育', unitValue: 7, remark: '主题班会、思政教育与谈心谈话' },
+  { categoryName: '辅导员岗', subTypeName: '日常事务', unitValue: 5, remark: '请销假、奖助勤贷与突发事务处理' },
+  { categoryName: '教辅岗', subTypeName: '图书资源服务', unitValue: 5, remark: '图书借阅管理、教材发放支持' },
+  { categoryName: '教辅岗', subTypeName: '设备保障服务', unitValue: 6, remark: '教学设备巡检、报修与保障' },
+  { categoryName: '教辅岗', subTypeName: '教学秘书支持', unitValue: 5, remark: '教学秘书排课、考试组织与资料归档' },
+  { categoryName: '行政兼课岗', subTypeName: '行政管理事务', unitValue: 6, remark: '行政管理、流程审批与协调工作' },
+  { categoryName: '行政兼课岗', subTypeName: '兼课教学任务', unitValue: 7, remark: '行政人员承担课程授课任务' },
+  { categoryName: '行政兼课岗', subTypeName: '行政教学协同', unitValue: 5, remark: '教学检查、质量反馈与改进' },
+  { categoryName: '外聘教师岗', subTypeName: '外聘授课', unitValue: 7, remark: '外聘教师课程授课任务' },
+  { categoryName: '外聘教师岗', subTypeName: '课程考核', unitValue: 5, remark: '作业批改、考试命题与阅卷' },
+  { categoryName: '外聘教师岗', subTypeName: '答疑辅导', unitValue: 4, remark: '课后答疑与学习辅导' }
 ]
 
 const form = reactive({

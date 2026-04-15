@@ -7,10 +7,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class WorkloadTypeServiceImpl implements WorkloadTypeService {
+    private static final Set<String> ALLOWED_CATEGORIES = new LinkedHashSet<>(List.of(
+            "专任教师岗",
+            "实验教师岗",
+            "辅导员岗",
+            "教辅岗",
+            "行政兼课岗",
+            "外聘教师岗"
+    ));
 
     private final WorkloadTypeRepository workloadTypeRepository;
 
@@ -36,6 +46,7 @@ public class WorkloadTypeServiceImpl implements WorkloadTypeService {
         if (normalizedTypeName == null || normalizedTypeName.isBlank()) {
             throw new IllegalArgumentException("工作量类型名称不能为空");
         }
+        validateCategory(workloadType.getCategoryName());
         if (workloadTypeRepository.existsByTypeName(normalizedTypeName)) {
             throw new IllegalArgumentException("工作量类型名称已存在：" + normalizedTypeName);
         }
@@ -67,6 +78,7 @@ public class WorkloadTypeServiceImpl implements WorkloadTypeService {
                     });
             existing.setTypeName(normalizedTypeName);
         }
+        validateCategory(workloadType.getCategoryName());
         existing.setCategoryName(trimToNull(workloadType.getCategoryName()));
         existing.setSubTypeName(trimToNull(workloadType.getSubTypeName()));
 
@@ -115,5 +127,15 @@ public class WorkloadTypeServiceImpl implements WorkloadTypeService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private void validateCategory(String categoryName) {
+        String normalized = trimToNull(categoryName);
+        if (normalized == null) {
+            throw new IllegalArgumentException("工作大类不能为空");
+        }
+        if (!ALLOWED_CATEGORIES.contains(normalized)) {
+            throw new IllegalArgumentException("仅支持以下工作大类：" + String.join("、", ALLOWED_CATEGORIES));
+        }
     }
 }
