@@ -47,9 +47,8 @@
       </template>
 
       <el-row :gutter="12" class="summary-row">
-        <el-col :span="8"><div class="summary-item">教师总数：{{ analysis.summary.teacherCount || 0 }}</div></el-col>
-        <el-col :span="8"><div class="summary-item low">低负荷：{{ analysis.summary.lowCount || 0 }}</div></el-col>
-        <el-col :span="8"><div class="summary-item high">高负荷：{{ analysis.summary.highCount || 0 }}</div></el-col>
+        <el-col :span="12"><div class="summary-item">教师总数：{{ analysis.summary.teacherCount || 0 }}</div></el-col>
+        <el-col :span="12"><div class="summary-item low">低负荷：{{ analysis.summary.lowCount || 0 }}</div></el-col>
       </el-row>
 
       <div ref="analysisChartRef" class="analysis-chart"></div>
@@ -59,8 +58,8 @@
         <el-table-column prop="postType" label="岗位" min-width="100" />
         <el-table-column prop="title" label="职称" min-width="100" />
         <el-table-column prop="equivalentAmount" label="折算工作量" width="120" />
-        <el-table-column label="阈值区间" min-width="150">
-          <template #default="scope">{{ scope.row.minThreshold }} ~ {{ scope.row.maxThreshold }}</template>
+        <el-table-column label="最低阈值" min-width="120">
+          <template #default="scope">{{ scope.row.minThreshold }}</template>
         </el-table-column>
         <el-table-column label="状态" width="90">
           <template #default="scope">
@@ -193,14 +192,12 @@ function statusText(status) {
 function levelText(level) {
   const value = String(level || '').toUpperCase()
   if (value === 'LOW') return '过低'
-  if (value === 'HIGH') return '过高'
   return '正常'
 }
 
 function levelTagType(level) {
   const value = String(level || '').toUpperCase()
   if (value === 'LOW') return 'warning'
-  if (value === 'HIGH') return 'danger'
   return 'success'
 }
 
@@ -283,7 +280,7 @@ function renderChart() {
   const items = Array.isArray(analysis.value.items) ? analysis.value.items : []
   analysisChart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['折算工作量', '最低阈值', '最高阈值'] },
+    legend: { data: ['折算工作量', '最低阈值'] },
     grid: { left: 30, right: 20, top: 40, bottom: 90 },
     xAxis: {
       type: 'category',
@@ -300,7 +297,6 @@ function renderChart() {
           color: (params) => {
             const level = String(items[params.dataIndex]?.level || '').toUpperCase()
             if (level === 'LOW') return '#e6a23c'
-            if (level === 'HIGH') return '#f56c6c'
             return '#67c23a'
           }
         }
@@ -309,12 +305,6 @@ function renderChart() {
         name: '最低阈值',
         type: 'line',
         data: items.map((item) => item.minThreshold),
-        smooth: true
-      },
-      {
-        name: '最高阈值',
-        type: 'line',
-        data: items.map((item) => item.maxThreshold),
         smooth: true
       }
     ]
@@ -440,11 +430,6 @@ onBeforeUnmount(() => {
 .summary-item.low {
   background: #fdf6ec;
   color: #e6a23c;
-}
-
-.summary-item.high {
-  background: #fef0f0;
-  color: #f56c6c;
 }
 
 .analysis-chart {

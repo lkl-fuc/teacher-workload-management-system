@@ -105,8 +105,7 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
             BigDecimal equivalent = equivalentByTeacher.getOrDefault(teacher.getId(), BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP);
 
             WarningRule thresholdRule = resolveThresholdRule(teacher.getPostType());
-            BigDecimal min = thresholdRule.getMinValue() == null ? BigDecimal.ZERO : thresholdRule.getMinValue();
-            BigDecimal max = thresholdRule.getMaxValue() == null ? new BigDecimal("999999") : thresholdRule.getMaxValue();
+            BigDecimal min = relaxMinThreshold(thresholdRule.getMinValue());
 
             String level = "NORMAL";
             String message = "工作量处于合理区间";
@@ -115,10 +114,6 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
                 level = "LOW";
                 message = String.format("预警：当前折算工作量 %.2f 低于阈值 %.2f，请关注任务分配", equivalent, min);
                 summary.setLowCount(summary.getLowCount() + 1);
-            } else if (equivalent.compareTo(max) > 0) {
-                level = "HIGH";
-                message = String.format("预警：当前折算工作量 %.2f 高于阈值 %.2f，请关注负荷均衡", equivalent, max);
-                summary.setHighCount(summary.getHighCount() + 1);
             } else {
                 summary.setNormalCount(summary.getNormalCount() + 1);
             }
@@ -135,7 +130,7 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
             item.setTotalAmount(total);
             item.setEquivalentAmount(equivalent);
             item.setMinThreshold(min);
-            item.setMaxThreshold(max);
+            item.setMaxThreshold(null);
             item.setLevel(level);
             item.setWarningMessage(message);
             items.add(item);
@@ -317,6 +312,11 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
         if (roleText.contains("辅讲") || roleText.contains("协同")) return new BigDecimal("1.00");
         if (roleText.contains("指导") || roleText.contains("助理")) return new BigDecimal("0.90");
         return ONE;
+    }
+
+    private BigDecimal relaxMinThreshold(BigDecimal rawMinThreshold) {
+        BigDecimal raw = rawMinThreshold == null ? BigDecimal.ZERO : rawMinThreshold;
+        return raw.multiply(new BigDecimal("0.70")).setScale(2, RoundingMode.HALF_UP);
     }
 
     private String emptyAsDefault(String value, String defaultValue) {
