@@ -123,7 +123,7 @@ const rules = computed(() => ({
 }))
 
 const currentTeacherPost = computed(() => {
-  if (!isAdmin.value) return localStorage.getItem('teacherPost') || '行政岗'
+  if (!isAdmin.value) return localStorage.getItem('teacherPost') || '专任教师岗'
   const teacher = teacherOptions.value.find((item) => Number(item.id) === Number(form.teacherId))
   return teacher?.postType || ''
 })
@@ -303,15 +303,12 @@ function typeLabel(item) {
 
 function matchPostType(item, normalizedPost) {
   const text = normalizeText([item.typeName, item.categoryName, item.subTypeName, item.remark].filter(Boolean).join(' '))
-  if (normalizedPost.includes('行政')) {
-    return ['行政', '管理', '服务', '支撑'].some((keyword) => text.includes(keyword))
-  }
-  if (normalizedPost.includes('管理')) {
-    return ['管理', '审核', '质量', '规划', '督导'].some((keyword) => text.includes(keyword))
-  }
-  if (normalizedPost.includes('教辅')) {
-    return ['教学', '教辅', '考试', '实验', '实训', '服务'].some((keyword) => text.includes(keyword))
-  }
+  if (normalizedPost.includes('专任教师')) return ['教学', '授课', '课程', '教研'].some((keyword) => text.includes(keyword))
+  if (normalizedPost.includes('实验教师')) return ['实验', '实验室', '实训', '指导', '教学'].some((keyword) => text.includes(keyword))
+  if (normalizedPost.includes('辅导员')) return ['学生', '思政', '教育', '班会', '事务'].some((keyword) => text.includes(keyword))
+  if (normalizedPost.includes('教辅')) return ['教辅', '图书', '设备', '秘书', '保障', '服务'].some((keyword) => text.includes(keyword))
+  if (normalizedPost.includes('行政兼课')) return ['行政', '管理', '教学', '授课'].some((keyword) => text.includes(keyword))
+  if (normalizedPost.includes('外聘教师')) return ['外聘', '授课', '教学', '课程', '答疑'].some((keyword) => text.includes(keyword))
   return true
 }
 

@@ -42,7 +42,7 @@
             <el-tag effect="plain" type="info">管理流程清晰</el-tag>
           </div>
           <div v-else class="teacher-actions">
-            <el-button type="primary" plain @click="goTo('/workloads/create')">填报工作量</el-button>
+            <el-button type="primary" plain @click="goTo('/workloads/new')">填报工作量</el-button>
             <el-button type="success" plain @click="goTo('/teacher/post-tasks')">查看岗位任务</el-button>
             <el-button type="warning" plain @click="goTo('/teacher/notices')">查看预警通知</el-button>
           </div>
@@ -66,16 +66,19 @@ const workloadTypes = ref([])
 const router = useRouter()
 const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
 const isTeacher = computed(() => role.value === 'TEACHER')
-const teacherPost = computed(() => localStorage.getItem('teacherPost') || '行政岗')
+const teacherPost = computed(() => localStorage.getItem('teacherPost') || '专任教师岗')
 const teacherName = computed(() => localStorage.getItem('name') || '老师')
 
 const teacherFocusByPost = {
-  行政岗: ['完善值班与巡检记录', '关注本周待处理通知', '按时提交流程型工作量'],
-  管理岗: ['跟进分派任务进度', '复核关键工作量记录', '汇总团队周度完成情况'],
-  教辅岗: ['保障教学资源与设备', '跟踪教辅任务响应时效', '归档服务型工作量证明']
+  专任教师岗: ['按课程计划完成授课记录', '每周提交教研活动与备课总结', '及时补充教学质量改进材料'],
+  实验教师岗: ['提交实验教学课时与实验项目指导记录', '维护实验室开放与安全巡检台账', '反馈实验课程改进建议'],
+  辅导员岗: ['更新学生管理与谈心谈话记录', '提交思想教育与主题班会完成情况', '登记日常事务处置与跟踪闭环'],
+  教辅岗: ['完成图书、设备或教学秘书服务记录', '跟踪教辅保障任务响应时效', '归档教学支持材料与证明'],
+  行政兼课岗: ['填报行政事务完成量', '补充兼课教学课时与教研记录', '关注双重岗位任务截止时间'],
+  外聘教师岗: ['按授课安排提交周课时', '填报课程考核与答疑辅导工作', '上传外聘教学佐证材料']
 }
 
-const teacherFocusList = computed(() => teacherFocusByPost[teacherPost.value] || teacherFocusByPost.行政岗)
+const teacherFocusList = computed(() => teacherFocusByPost[teacherPost.value] || teacherFocusByPost.专任教师岗)
 
 const heroTitle = computed(() =>
   isTeacher.value ? `${teacherName.value}，欢迎进入您的工作台` : '教师工作量管理系统'

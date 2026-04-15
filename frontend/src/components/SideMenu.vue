@@ -51,7 +51,7 @@ import {
 const route = useRoute()
 
 const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
-const teacherPost = computed(() => localStorage.getItem('teacherPost') || '行政岗')
+const teacherPost = computed(() => localStorage.getItem('teacherPost') || '专任教师岗')
 
 const adminMenuItems = [
   { index: '/home', label: '首页', icon: House },
@@ -87,19 +87,20 @@ const baseTeacherMenu = [
 ]
 
 const teacherPostMenus = {
-  行政岗: [
-    { index: '/teacher/schedule', label: '值班安排', icon: Calendar }
+  专任教师岗: [
+    { index: '/teacher/schedule', label: '教学安排', icon: Calendar }
   ],
-  管理岗: [
-    { index: '/teacher/schedule', label: '值班安排', icon: Calendar }
+  实验教师岗: [
+    { index: '/teacher/schedule', label: '实验安排', icon: Calendar }
   ],
-  教辅岗: [
-    { index: '/teacher/post-tasks', label: '教辅服务任务看板', icon: Plus }
-  ]
+  辅导员岗: [{ index: '/teacher/schedule', label: '学生事务日程', icon: Calendar }],
+  教辅岗: [{ index: '/teacher/post-tasks', label: '教辅服务任务看板', icon: Plus }],
+  行政兼课岗: [{ index: '/teacher/schedule', label: '行政/兼课日程', icon: Calendar }],
+  外聘教师岗: [{ index: '/teacher/schedule', label: '授课计划', icon: Calendar }]
 }
 
 const teacherMenuItems = computed(() => {
-  const postItems = teacherPostMenus[teacherPost.value] || teacherPostMenus.行政岗
+  const postItems = teacherPostMenus[teacherPost.value] || teacherPostMenus.专任教师岗
   return baseTeacherMenu.map((item) => {
     if (item.index !== 'teacher-tools') return item
     return {
