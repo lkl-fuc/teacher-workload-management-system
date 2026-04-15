@@ -163,16 +163,38 @@ public class WorkloadServiceImpl implements WorkloadService {
                 normalize(type.getRemark())
         );
 
-        if (post.contains("行政")) {
-            return keywords.contains("管理") || keywords.contains("行政") || keywords.contains("服务") || keywords.contains("支撑");
+        if (post.contains("专任教师")) {
+            return containsAny(keywords, "专任", "教学", "授课", "课程", "教研");
         }
-        if (post.contains("管理")) {
-            return keywords.contains("管理") || keywords.contains("审核") || keywords.contains("质量") || keywords.contains("规划");
+        if (post.contains("实验教师")) {
+            return containsAny(keywords, "实验", "实验室", "指导", "实训", "教学");
+        }
+        if (post.contains("辅导员")) {
+            return containsAny(keywords, "辅导员", "学生", "思政", "教育", "班会", "事务");
         }
         if (post.contains("教辅")) {
-            return keywords.contains("教学") || keywords.contains("教辅") || keywords.contains("考试") || keywords.contains("实验") || keywords.contains("实训");
+            return containsAny(keywords, "教辅", "图书", "设备", "秘书", "保障", "服务");
+        }
+        if (post.contains("行政兼课")) {
+            return containsAny(keywords, "行政", "兼课", "教学", "授课", "管理");
+        }
+        if (post.contains("外聘教师")) {
+            return containsAny(keywords, "外聘", "授课", "课程", "答疑", "教学");
+        }
+        if (post.contains("行政")) {
+            return containsAny(keywords, "管理", "行政", "服务", "支撑");
+        }
+        if (post.contains("管理")) {
+            return containsAny(keywords, "管理", "审核", "质量", "规划");
         }
         return true;
+    }
+
+    private boolean containsAny(String text, String... keywords) {
+        for (String keyword : keywords) {
+            if (text.contains(normalize(keyword))) return true;
+        }
+        return false;
     }
 
     private String normalize(String value) {

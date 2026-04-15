@@ -211,12 +211,24 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
         BigDecimal min = new BigDecimal("80");
         BigDecimal max = new BigDecimal("200");
         String normalized = target.replace(" ", "");
-        if (normalized.contains("教学")) {
+        if (normalized.contains("专任教师")) {
             min = new BigDecimal("120");
             max = new BigDecimal("260");
-        } else if (normalized.contains("科研")) {
+        } else if (normalized.contains("实验教师")) {
+            min = new BigDecimal("110");
+            max = new BigDecimal("240");
+        } else if (normalized.contains("辅导员")) {
+            min = new BigDecimal("90");
+            max = new BigDecimal("190");
+        } else if (normalized.contains("教辅")) {
+            min = new BigDecimal("85");
+            max = new BigDecimal("180");
+        } else if (normalized.contains("行政兼课")) {
             min = new BigDecimal("100");
             max = new BigDecimal("220");
+        } else if (normalized.contains("外聘教师")) {
+            min = new BigDecimal("70");
+            max = new BigDecimal("170");
         } else if (normalized.contains("行政")) {
             min = new BigDecimal("60");
             max = new BigDecimal("160");
@@ -267,6 +279,10 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
             ).toLowerCase(Locale.ROOT);
         }
         if (text.contains("教学") || text.contains("课程")) return new BigDecimal("1.20");
+        if (text.contains("实验")) return new BigDecimal("1.18");
+        if (text.contains("辅导员") || text.contains("学生") || text.contains("思政")) return new BigDecimal("1.10");
+        if (text.contains("教辅") || text.contains("设备") || text.contains("图书")) return new BigDecimal("1.05");
+        if (text.contains("外聘")) return new BigDecimal("1.08");
         if (text.contains("科研") || text.contains("论文")) return new BigDecimal("1.10");
         if (text.contains("管理") || text.contains("行政")) return new BigDecimal("0.90");
         return ONE;
@@ -283,6 +299,12 @@ public class WorkloadWarningServiceImpl implements WorkloadWarningService {
 
     private BigDecimal resolvePostWeight(String postType) {
         String value = emptyAsDefault(postType, "").toLowerCase(Locale.ROOT);
+        if (value.contains("专任教师")) return new BigDecimal("1.15");
+        if (value.contains("实验教师")) return new BigDecimal("1.12");
+        if (value.contains("辅导员")) return new BigDecimal("1.08");
+        if (value.contains("教辅")) return new BigDecimal("1.03");
+        if (value.contains("行政兼课")) return new BigDecimal("1.10");
+        if (value.contains("外聘教师")) return new BigDecimal("1.05");
         if (value.contains("教学")) return new BigDecimal("1.15");
         if (value.contains("科研")) return new BigDecimal("1.10");
         if (value.contains("行政")) return new BigDecimal("0.95");

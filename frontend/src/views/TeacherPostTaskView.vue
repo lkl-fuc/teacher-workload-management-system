@@ -60,21 +60,33 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
-const teacherPost = computed(() => localStorage.getItem('teacherPost') || '行政岗')
+const teacherPost = computed(() => localStorage.getItem('teacherPost') || '专任教师岗')
 
 const postMap = {
-  行政岗: {
-    title: '行政岗以“流程执行 + 数据上报”为主',
-    description: '重点关注值班、材料归档、考勤统计等流程型任务，可按周完成并提交记录。'
+  专任教师岗: {
+    title: '专任教师岗以“授课 + 教学 + 教研”为主',
+    description: '每周重点填报课堂教学、教学改进、教研活动等任务，提交后由管理员按岗位规则自动折算工作量。'
   },
-  管理岗: {
-    title: '管理岗以“统筹管理 + 审核监督”为主',
-    description: '重点关注部门任务分派、过程监督、绩效审核，任务通常关联多人协同。'
+  实验教师岗: {
+    title: '实验教师岗以“实验教学 + 实验室指导”为主',
+    description: '重点填报实验课组织、实验指导与实验室安全管理任务，系统按实验岗位系数自动核算。'
+  },
+  辅导员岗: {
+    title: '辅导员岗以“学生管理 + 思想教育 + 日常事务”为主',
+    description: '重点填报学生事务、谈心谈话、主题教育活动及突发事件处置等任务。'
   },
   教辅岗: {
     title: '教辅岗以“教学保障 + 资源服务”为主',
-    description: '重点关注教室设备、实训资源、考试组织等教辅任务，强调及时响应。'
-  }
+    description: '重点填报图书与设备服务、教学秘书支持、资源调配等保障性任务。'
+  },
+  行政兼课岗: {
+    title: '行政兼课岗以“行政管理 + 部分教学任务”为主',
+    description: '需同时填报行政工作与兼课任务，系统将根据任务类型分别折算并汇总。'
+  },
+  外聘教师岗: {
+    title: '外聘教师岗以“课程授课 + 指导答疑”为主',
+    description: '重点填报校外聘任课程授课、答疑与考核指导任务，系统按外聘岗位规则折算。'
+  },
 }
 
 const loading = ref(false)
@@ -83,7 +95,7 @@ const typeMap = ref(new Map())
 const detailVisible = ref(false)
 const currentMetric = ref('all')
 
-const postDesc = computed(() => postMap[teacherPost.value] || postMap.行政岗)
+const postDesc = computed(() => postMap[teacherPost.value] || postMap.专任教师岗)
 
 const displayTasks = computed(() => buildTaskRows(workloads.value))
 
@@ -196,11 +208,23 @@ function buildTaskRows(rows) {
 
 function calcEquivalent(amount, type) {
   const typeText = `${type?.typeName || ''}${type?.categoryName || ''}${type?.subTypeName || ''}`
-  let weight = 1
+  let weight = resolvePostWeight()
   if (/教学|考试|实训/.test(typeText)) weight = 1.15
-  if (/管理|审核|规划|行政/.test(typeText)) weight = 1.05
-  if (/服务|支撑|保障/.test(typeText)) weight = 0.95
+  if (/实验|实验室|指导/.test(typeText)) weight += 0.08
+  if (/学生|思政|班会|辅导/.test(typeText)) weight += 0.06
+  if (/行政|管理|事务/.test(typeText)) weight += 0.04
+  if (/图书|设备|教辅|秘书|保障/.test(typeText)) weight += 0.03
   return amount * weight
+}
+
+function resolvePostWeight() {
+  if (teacherPost.value.includes('专任教师')) return 1.12
+  if (teacherPost.value.includes('实验教师')) return 1.1
+  if (teacherPost.value.includes('辅导员')) return 1.06
+  if (teacherPost.value.includes('教辅')) return 1.02
+  if (teacherPost.value.includes('行政兼课')) return 1.08
+  if (teacherPost.value.includes('外聘')) return 1.04
+  return 1
 }
 
 function statusText(status) {
