@@ -7,14 +7,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 public class WorkloadTypeDataInitializer {
+    private static final Set<String> ALLOWED_CATEGORIES = new LinkedHashSet<>(List.of(
+            "专任教师岗",
+            "实验教师岗",
+            "辅导员岗",
+            "教辅岗",
+            "行政兼课岗",
+            "外聘教师岗"
+    ));
 
     @Bean
     public CommandLineRunner initWorkloadTypes(WorkloadTypeRepository workloadTypeRepository) {
         return args -> {
+            workloadTypeRepository.deleteAll(workloadTypeRepository.findByCategoryNameNotIn(ALLOWED_CATEGORIES));
+
             List<WorkloadType> defaultTypes = List.of(
                     buildType("专任教师岗", "课堂授课", "专任教师每周授课工作量", "8"),
                     buildType("专任教师岗", "教学准备", "教案、备课与课程资源建设", "4"),
