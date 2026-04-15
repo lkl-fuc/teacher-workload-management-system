@@ -35,14 +35,14 @@ import { ElMessage } from 'element-plus'
 
 const loading = ref(false)
 const teachers = ref([])
-const activeTab = ref('行政岗')
-const postOrder = ['行政岗', '管理岗', '教辅岗']
+const activeTab = ref('专任教师岗')
+const postOrder = ['专任教师岗', '实验教师岗', '辅导员岗', '教辅岗', '行政兼课岗', '外聘教师岗']
 
 const groupedTeacherList = computed(() => {
   const groupedMap = new Map(postOrder.map((key) => [key, []]))
 
   teachers.value.forEach((item) => {
-    const post = postOrder.includes(item.postType) ? item.postType : '行政岗'
+    const post = postOrder.includes(item.postType) ? item.postType : '专任教师岗'
     groupedMap.get(post).push(item)
   })
 
@@ -74,7 +74,7 @@ async function loadTeachers() {
     const data = await request('/api/teachers')
     teachers.value = (Array.isArray(data) ? data : []).map((item) => ({
       ...item,
-      postType: postOrder.includes(item.postType) ? item.postType : '行政岗'
+      postType: postOrder.includes(item.postType) ? item.postType : '专任教师岗'
     }))
   } catch (error) {
     ElMessage.error(error?.message || '加载教师信息失败')

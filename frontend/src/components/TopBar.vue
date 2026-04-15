@@ -20,7 +20,7 @@ const router = useRouter()
 const displayIdentity = computed(() => {
   const role = String(localStorage.getItem('role') || '').toUpperCase()
   const name = localStorage.getItem('name') || ''
-  const teacherPost = localStorage.getItem('teacherPost') || '行政岗'
+  const teacherPost = localStorage.getItem('teacherPost') || '专任教师岗'
   const roleLabel = role === 'TEACHER' ? `教师（${teacherPost}）` : '管理员'
   return name ? `${roleLabel}：${name}` : roleLabel
 })
