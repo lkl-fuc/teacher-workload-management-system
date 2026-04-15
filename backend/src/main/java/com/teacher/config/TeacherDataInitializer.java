@@ -7,7 +7,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Configuration
 public class TeacherDataInitializer {
@@ -35,10 +39,54 @@ public class TeacherDataInitializer {
                 }
 
                 Teacher existing = existingTeacher.get();
-                if (existing.getPostType() == null || existing.getPostType().isBlank()) {
+                boolean shouldUpdate = false;
+                if (!teacher.getName().equals(existing.getName())) {
+                    existing.setName(teacher.getName());
+                    shouldUpdate = true;
+                }
+                if (!teacher.getPostType().equals(existing.getPostType())) {
                     existing.setPostType(teacher.getPostType());
+                    shouldUpdate = true;
+                }
+                if (shouldUpdate) {
                     teacherRepository.save(existing);
                 }
+            }
+
+            List<Teacher> allTeachers = teacherRepository.findAll();
+            boolean normalized = false;
+            for (Teacher teacher : allTeachers) {
+                if (teacher.getName() != null && teacher.getName().contains("张三（已修改）")) {
+                    teacher.setName(teacher.getName().replace("张三（已修改）", "张三"));
+                    teacherRepository.save(teacher);
+                    normalized = true;
+                }
+            }
+            if (normalized) {
+                allTeachers = teacherRepository.findAll();
+            }
+
+            Map<String, Teacher> teacherByPost = allTeachers.stream()
+                    .filter(item -> item.getPostType() != null && !item.getPostType().isBlank())
+                    .collect(Collectors.toMap(
+                            Teacher::getPostType,
+                            Function.identity(),
+                            (first, second) -> first
+                    ));
+
+            Set<String> existingTeacherNos = allTeachers.stream()
+                    .map(Teacher::getTeacherNo)
+                    .collect(Collectors.toSet());
+
+            for (Teacher teacher : defaultTeachers) {
+                if (teacherByPost.containsKey(teacher.getPostType())) {
+                    continue;
+                }
+                if (existingTeacherNos.contains(teacher.getTeacherNo())) {
+                    continue;
+                }
+                teacherRepository.save(teacher);
+                existingTeacherNos.add(teacher.getTeacherNo());
             }
         };
     }
