@@ -272,9 +272,14 @@ async function request(url, options = {}) {
       const errorData = await response.json()
       message = errorData.message || message
     } catch {
-      // ignore parse errors
+      try {
+        const text = await response.text()
+        if (text) message = text
+      } catch {
+        // ignore parse errors
+      }
     }
-    throw new Error(message)
+    throw new Error(`${message}${response.status ? `（HTTP ${response.status}）` : ''}`)
   }
 
   if (response.status === 204) {
@@ -363,9 +368,14 @@ async function handleSubmit() {
 
     submitLoading.value = true
     try {
+      const adminTypeId = isAdmin.value ? resolveAdminTypeId() : null
+      if (isAdmin.value && !adminTypeId) {
+        throw new Error('未找到可用的工作量类型，请先在“工作量类型管理”中配置岗位类型')
+      }
+
       const payload = {
         teacherId,
-        typeId: isAdmin.value ? null : form.typeId,
+        typeId: isAdmin.value ? adminTypeId : form.typeId,
         workloadTitle: isAdmin.value ? `【${form.specialType}】${form.title}` : form.title,
         amount: form.score,
         description: form.description,
@@ -572,6 +582,22 @@ async function submitFixedTasks() {
   } finally {
     submitLoading.value = false
   }
+}
+
+function resolveAdminTypeId() {
+  const normalizedPost = normalizeText(currentTeacherPost.value)
+  const keyword = normalizeText(`${form.specialType || ''}${form.title || ''}`)
+  const candidates = filteredTypeOptions.value.length > 0 ? filteredTypeOptions.value : typeOptions.value
+  if (candidates.length === 0) return null
+
+  const matched = candidates.find((item) => {
+    const searchText = normalizeText(`${item.typeName || ''}${item.subTypeName || ''}${item.categoryName || ''}${item.remark || ''}`)
+    const postMatched = !normalizedPost || matchPostType(item, normalizedPost)
+    const keywordMatched = !keyword || searchText.includes(keyword) || keyword.includes(searchText)
+    return postMatched && keywordMatched
+  })
+
+  return Number(matched?.id || candidates[0]?.id || 0)
 }
 
 function resetFixedTasks() {
