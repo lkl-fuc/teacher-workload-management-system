@@ -32,26 +32,12 @@
           </el-select>
         </el-form-item>
 
-        <el-alert
-          v-if="matchedTypeHint"
-          class="mb-12"
-          type="success"
-          :closable="false"
-          :title="matchedTypeHint"
-        />
-
-        <el-form-item label="工作类型" prop="typeId">
-          <el-cascader
-            v-model="selectedTypePath"
-            :options="typeTreeOptions"
-            :props="{ value: 'value', label: 'label', children: 'children', emitPath: true }"
-            placeholder="请选择【大类 -> 小类】"
-            style="width: 100%"
-            filterable
-            clearable
-            :show-all-levels="true"
-            :disabled="typeLoading"
-            @change="handleTypePathChange"
+        <el-form-item label="专项类型" prop="specialType">
+          <el-input
+            v-model="form.specialType"
+            placeholder="请输入专项任务类型（如：迎评整改、重点督导、专项活动）"
+            maxlength="50"
+            show-word-limit
           />
         </el-form-item>
 
@@ -198,7 +184,6 @@ const submitLoading = ref(false)
 const typeLoading = ref(false)
 const teacherLoading = ref(false)
 const typeOptions = ref([])
-const selectedTypePath = ref([])
 const teacherOptions = ref([])
 const selectedTaskTemplate = ref('')
 const fixedTaskYear = ref(String(new Date().getFullYear()))
@@ -209,6 +194,7 @@ const isAdmin = computed(() => role.value === 'ADMIN')
 const form = reactive({
   teacherId: null,
   typeId: null,
+  specialType: '',
   title: '',
   score: 0,
   description: '',
@@ -217,7 +203,7 @@ const form = reactive({
 
 const rules = computed(() => ({
   teacherId: isAdmin.value ? [{ required: true, message: '请选择分发教师', trigger: 'change' }] : [],
-  typeId: [{ required: true, message: '请选择工作类型', trigger: 'change' }],
+  specialType: isAdmin.value ? [{ required: true, message: '请输入专项类型', trigger: 'blur' }] : [],
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
   score: [{ required: true, message: '请输入分值', trigger: 'change' }],
   workDate: [{ required: true, message: '请选择工作日期', trigger: 'change' }]
@@ -234,29 +220,6 @@ const filteredTypeOptions = computed(() => {
   if (!post) return typeOptions.value
 
   return typeOptions.value.filter((item) => matchPostType(item, post))
-})
-
-const typeTreeOptions = computed(() => {
-  const grouped = filteredTypeOptions.value.reduce((acc, item) => {
-    const category = item.categoryName || '未分类'
-    if (!acc[category]) acc[category] = []
-    acc[category].push(item)
-    return acc
-  }, {})
-
-  return Object.keys(grouped).map((category) => ({
-    value: `category-${category}`,
-    label: category,
-    children: grouped[category].map((item) => ({
-      value: item.id,
-      label: typeLabel(item)
-    }))
-  }))
-})
-
-const matchedTypeHint = computed(() => {
-  if (!currentTeacherPost.value) return ''
-  return `当前将按【${currentTeacherPost.value}】岗位匹配任务类型并分发到教师端任务面板。`
 })
 
 const selectedFixedTaskCount = computed(() => fixedTaskRows.value.filter((item) => item.done).length)
@@ -324,7 +287,7 @@ async function request(url, options = {}) {
 function resetFormModel() {
   form.teacherId = null
   form.typeId = null
-  selectedTypePath.value = []
+  form.specialType = ''
   selectedTaskTemplate.value = ''
   form.title = ''
   form.score = 0
@@ -344,19 +307,10 @@ function applyTaskTemplate(templateTitle) {
   }
 }
 
-function handleTypePathChange(path) {
-  if (!Array.isArray(path) || path.length < 2) {
-    form.typeId = null
-    return
-  }
-  form.typeId = Number(path[path.length - 1]) || null
-}
-
 watch(
   () => form.teacherId,
   () => {
-    selectedTypePath.value = []
-    form.typeId = null
+    form.specialType = ''
   }
 )
 
@@ -411,8 +365,8 @@ async function handleSubmit() {
     try {
       const payload = {
         teacherId,
-        typeId: form.typeId,
-        workloadTitle: form.title,
+        typeId: isAdmin.value ? null : form.typeId,
+        workloadTitle: isAdmin.value ? `【${form.specialType}】${form.title}` : form.title,
         amount: form.score,
         description: form.description,
         submitDate: form.workDate,
@@ -438,14 +392,6 @@ async function handleSubmit() {
 function handleReset() {
   resetFormModel()
   formRef.value?.clearValidate()
-}
-
-function typeLabel(item) {
-  const categoryText = item.categoryName ? `${item.categoryName}` : ''
-  const subTypeText = item.subTypeName ? `${item.subTypeName}` : ''
-  const nameText = item.typeName || [categoryText, subTypeText].filter(Boolean).join(' - ')
-  const scoreText = item.unitValue != null ? `（建议分值：${item.unitValue}）` : ''
-  return `${nameText}${scoreText}`
 }
 
 function matchPostType(item, normalizedPost) {
