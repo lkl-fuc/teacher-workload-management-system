@@ -124,7 +124,7 @@ public class WorkloadServiceImpl implements WorkloadService {
         if (workload.getTeacherId() == null) {
             throw new IllegalArgumentException("teacherId 不能为空");
         }
-        if (workload.getTypeId() == null && !isAdminAssigned(workload.getSourceType())) {
+        if (workload.getTypeId() == null && !allowEmptyType(workload.getSourceType())) {
             throw new IllegalArgumentException("typeId 不能为空");
         }
         if (workload.getWorkloadTitle() == null || workload.getWorkloadTitle().isBlank()) {
@@ -136,7 +136,7 @@ public class WorkloadServiceImpl implements WorkloadService {
         if (teacherId == null) {
             throw new IllegalArgumentException("teacherId 不能为空");
         }
-        if (typeId == null && !isAdminAssigned(sourceType)) {
+        if (typeId == null && !allowEmptyType(sourceType)) {
             throw new IllegalArgumentException("typeId 不能为空");
         }
         if (!teacherRepository.existsById(teacherId)) {
@@ -209,7 +209,8 @@ public class WorkloadServiceImpl implements WorkloadService {
         return value.toLowerCase(Locale.ROOT).replace(" ", "");
     }
 
-    private boolean isAdminAssigned(String sourceType) {
-        return "ADMIN_ASSIGNED".equalsIgnoreCase(sourceType);
+    private boolean allowEmptyType(String sourceType) {
+        return "ADMIN_ASSIGNED".equalsIgnoreCase(sourceType)
+                || "REPRESENTATIVE_WORK".equalsIgnoreCase(sourceType);
     }
 }

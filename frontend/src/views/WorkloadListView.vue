@@ -345,6 +345,7 @@ function sourceText(sourceType) {
   const value = String(sourceType || '').toUpperCase()
   if (value === 'ADMIN_ASSIGNED') return '管理员分发'
   if (value === 'ANNUAL_FIXED') return '年度固定任务'
+  if (value === 'REPRESENTATIVE_WORK') return '自由代表作'
   return '其他'
 }
 
@@ -352,6 +353,7 @@ function sourceTagType(sourceType) {
   const value = String(sourceType || '').toUpperCase()
   if (value === 'ADMIN_ASSIGNED') return 'warning'
   if (value === 'ANNUAL_FIXED') return 'success'
+  if (value === 'REPRESENTATIVE_WORK') return 'primary'
   return 'info'
 }
 

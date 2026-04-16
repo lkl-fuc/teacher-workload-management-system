@@ -171,6 +171,63 @@
         <el-button @click="resetFixedTasks">重置</el-button>
         <el-button type="primary" :loading="submitLoading" @click="submitFixedTasks">提交固定任务</el-button>
       </div>
+
+      <el-divider content-position="left">自由上交代表作</el-divider>
+
+      <el-alert
+        type="info"
+        show-icon
+        :closable="false"
+        class="mb-12"
+        title="该入口独立于年度固定任务，教师可按需提交个人代表作；提交后由管理员人工审核并手动加分。"
+      />
+
+      <el-form
+        ref="masterpieceFormRef"
+        :model="masterpieceForm"
+        :rules="masterpieceRules"
+        label-width="110px"
+        class="masterpiece-form"
+      >
+        <el-form-item label="代表作标题" prop="title">
+          <el-input v-model="masterpieceForm.title" maxlength="100" show-word-limit placeholder="如：省级教学成果一等奖申报" />
+        </el-form-item>
+        <el-form-item label="成果类型" prop="kind">
+          <el-select v-model="masterpieceForm.kind" placeholder="请选择成果类型" style="width: 100%">
+            <el-option label="课程建设成果" value="课程建设成果" />
+            <el-option label="教学竞赛成果" value="教学竞赛成果" />
+            <el-option label="科研与教改成果" value="科研与教改成果" />
+            <el-option label="学生培养成果" value="学生培养成果" />
+            <el-option label="社会服务成果" value="社会服务成果" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="完成日期" prop="submitDate">
+          <el-date-picker
+            v-model="masterpieceForm.submitDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+            placeholder="请选择完成日期"
+          />
+        </el-form-item>
+        <el-form-item label="成果说明" prop="description">
+          <el-input
+            v-model="masterpieceForm.description"
+            type="textarea"
+            :rows="4"
+            maxlength="300"
+            show-word-limit
+            placeholder="请说明成果内容、个人贡献和可核验信息"
+          />
+        </el-form-item>
+        <el-form-item label="佐证链接">
+          <el-input v-model="masterpieceForm.fileUrl" placeholder="选填，如网盘/系统文件链接" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="masterpieceSubmitting" @click="submitMasterpiece">提交代表作</el-button>
+          <el-button @click="resetMasterpieceForm">重置</el-button>
+        </el-form-item>
+      </el-form>
     </template>
   </el-card>
 </template>
@@ -188,6 +245,8 @@ const teacherOptions = ref([])
 const selectedTaskTemplate = ref('')
 const fixedTaskYear = ref(String(new Date().getFullYear()))
 const fixedTaskRows = ref([])
+const masterpieceFormRef = ref()
+const masterpieceSubmitting = ref(false)
 const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
 const isAdmin = computed(() => role.value === 'ADMIN')
 
@@ -200,6 +259,13 @@ const form = reactive({
   description: '',
   workDate: ''
 })
+const masterpieceForm = reactive({
+  title: '',
+  kind: '',
+  submitDate: '',
+  description: '',
+  fileUrl: ''
+})
 
 const rules = computed(() => ({
   teacherId: isAdmin.value ? [{ required: true, message: '请选择分发教师', trigger: 'change' }] : [],
@@ -208,6 +274,12 @@ const rules = computed(() => ({
   score: [{ required: true, message: '请输入分值', trigger: 'change' }],
   workDate: [{ required: true, message: '请选择工作日期', trigger: 'change' }]
 }))
+const masterpieceRules = {
+  title: [{ required: true, message: '请填写代表作标题', trigger: 'blur' }],
+  kind: [{ required: true, message: '请选择成果类型', trigger: 'change' }],
+  submitDate: [{ required: true, message: '请选择完成日期', trigger: 'change' }],
+  description: [{ required: true, message: '请填写成果说明', trigger: 'blur' }]
+}
 
 const currentTeacherPost = computed(() => {
   if (!isAdmin.value) return localStorage.getItem('teacherPost') || '专任教师岗'
@@ -604,6 +676,60 @@ function resetFixedTasks() {
   rebuildFixedTasks()
 }
 
+function resetMasterpieceForm() {
+  masterpieceForm.title = ''
+  masterpieceForm.kind = ''
+  masterpieceForm.submitDate = ''
+  masterpieceForm.description = ''
+  masterpieceForm.fileUrl = ''
+  masterpieceFormRef.value?.clearValidate()
+}
+
+function buildMasterpieceDescription() {
+  const summary = `代表作类型：${masterpieceForm.kind}`
+  const body = masterpieceForm.description.trim()
+  const link = masterpieceForm.fileUrl.trim()
+  if (!link) return `${summary}；${body}`
+  return `${summary}；${body}\n\n[文件链接] ${link}`
+}
+
+async function submitMasterpiece() {
+  if (!masterpieceFormRef.value) return
+  await masterpieceFormRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    const teacherId = resolveTeacherId()
+    if (!teacherId) {
+      ElMessage.warning('当前未识别到教师身份，请重新登录')
+      return
+    }
+
+    masterpieceSubmitting.value = true
+    try {
+      const payload = {
+        teacherId,
+        typeId: null,
+        workloadTitle: `【代表作】${masterpieceForm.title}`,
+        amount: 0,
+        description: buildMasterpieceDescription(),
+        submitDate: masterpieceForm.submitDate,
+        status: 'PENDING',
+        sourceType: 'REPRESENTATIVE_WORK'
+      }
+      await request('/api/workloads', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      ElMessage.success('代表作已提交，等待管理员人工审核打分')
+      resetMasterpieceForm()
+    } catch (error) {
+      ElMessage.error(normalizeError(error, '代表作提交失败'))
+    } finally {
+      masterpieceSubmitting.value = false
+    }
+  })
+}
+
 onMounted(async () => {
   await loadTypeOptions()
   await loadTeacherOptions()
@@ -627,5 +753,9 @@ onMounted(async () => {
 .summary-text {
   margin-right: auto;
   color: var(--text-secondary);
+}
+
+.masterpiece-form {
+  max-width: 760px;
 }
 </style>
