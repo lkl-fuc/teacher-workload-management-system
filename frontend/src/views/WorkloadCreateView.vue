@@ -1,10 +1,18 @@
 <template>
   <el-card>
     <template #header>
-      <span>{{ isAdmin ? '新增工作量' : '年度固定任务填报' }}</span>
+      <span>{{ isAdmin ? '岗位任务分发' : '年度固定任务填报' }}</span>
     </template>
 
     <template v-if="isAdmin">
+      <el-alert
+        type="warning"
+        show-icon
+        :closable="false"
+        class="mb-12"
+        title="管理员分发任务将独立于年度固定任务，教师需回填完成情况后再由管理员人工审核、打分与折算。"
+      />
+
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 680px">
         <el-form-item v-if="isAdmin" label="分发教师" prop="teacherId">
           <el-select
@@ -49,6 +57,23 @@
 
         <el-form-item label="标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入标题" maxlength="100" show-word-limit />
+        </el-form-item>
+
+        <el-form-item label="任务模板">
+          <el-select
+            v-model="selectedTaskTemplate"
+            placeholder="按岗位选择常见任务模板（可选）"
+            style="width: 100%"
+            clearable
+            @change="applyTaskTemplate"
+          >
+            <el-option
+              v-for="item in taskTemplateOptions"
+              :key="item.title"
+              :label="`${item.title}（建议${item.score}分）`"
+              :value="item.title"
+            />
+          </el-select>
         </el-form-item>
 
         <el-form-item label="分值" prop="score">
@@ -175,6 +200,7 @@ const teacherLoading = ref(false)
 const typeOptions = ref([])
 const selectedTypePath = ref([])
 const teacherOptions = ref([])
+const selectedTaskTemplate = ref('')
 const fixedTaskYear = ref(String(new Date().getFullYear()))
 const fixedTaskRows = ref([])
 const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
@@ -237,6 +263,31 @@ const selectedFixedTaskCount = computed(() => fixedTaskRows.value.filter((item) 
 const totalFixedScore = computed(() => fixedTaskRows.value
   .filter((item) => item.done)
   .reduce((sum, item) => sum + calculateTaskScore(item), 0))
+const taskTemplateOptions = computed(() => {
+  const post = normalizeText(currentTeacherPost.value)
+  if (post.includes('专任教师')) {
+    return [
+      { title: '科研成果展示', score: 12, description: '组织并完成院系科研成果展，提交展示材料与总结。' },
+      { title: '论文发表与检索证明', score: 15, description: '完成高质量论文发表并提交检索/录用证明。' },
+      { title: '教改项目结题汇报', score: 10, description: '完成教改项目结题材料与现场汇报。' }
+    ]
+  }
+  if (post.includes('实验教师')) {
+    return [
+      { title: '实验项目成果展示', score: 10, description: '面向学院组织实验项目成果展示与示范。' },
+      { title: '实验室安全专题整改', score: 8, description: '完成安全检查整改闭环并提交佐证。' }
+    ]
+  }
+  if (post.includes('辅导员')) {
+    return [
+      { title: '学风建设专题活动', score: 8, description: '组织学风建设活动并形成效果评估。' },
+      { title: '重点学生帮扶案例', score: 10, description: '提交重点学生帮扶过程台账与成效复盘。' }
+    ]
+  }
+  return [
+    { title: '岗位专项任务', score: 8, description: '请结合岗位职责填写任务要求与验收标准。' }
+  ]
+})
 
 function normalizeError(error, fallback) {
   if (error?.message) return error.message
@@ -274,10 +325,23 @@ function resetFormModel() {
   form.teacherId = null
   form.typeId = null
   selectedTypePath.value = []
+  selectedTaskTemplate.value = ''
   form.title = ''
   form.score = 0
   form.description = ''
   form.workDate = ''
+}
+
+function applyTaskTemplate(templateTitle) {
+  const template = taskTemplateOptions.value.find((item) => item.title === templateTitle)
+  if (!template) return
+  form.title = template.title
+  if (!form.description) {
+    form.description = template.description
+  }
+  if (!form.score || Number(form.score) <= 0) {
+    form.score = template.score
+  }
 }
 
 function handleTypePathChange(path) {
@@ -352,7 +416,8 @@ async function handleSubmit() {
         amount: form.score,
         description: form.description,
         submitDate: form.workDate,
-        status: isAdmin.value ? 'ASSIGNED' : 'PENDING'
+        status: isAdmin.value ? 'ASSIGNED' : 'PENDING',
+        sourceType: isAdmin.value ? 'ADMIN_ASSIGNED' : 'SELF_REPORTED'
       }
 
       await request('/api/workloads', {
@@ -545,7 +610,8 @@ async function submitFixedTasks() {
         amount: Number(calculateTaskScore(task).toFixed(2)),
         description: fixedTaskDescription(task, yearText),
         submitDate,
-        status: 'PENDING'
+        status: 'PENDING',
+        sourceType: 'ANNUAL_FIXED'
       }
       await request('/api/workloads', {
         method: 'POST',

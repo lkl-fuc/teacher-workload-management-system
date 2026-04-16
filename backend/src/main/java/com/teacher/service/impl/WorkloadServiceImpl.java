@@ -90,6 +90,9 @@ public class WorkloadServiceImpl implements WorkloadService {
         if (workload.getRejectReason() != null) {
             existing.setRejectReason(workload.getRejectReason());
         }
+        if (workload.getSourceType() != null) {
+            existing.setSourceType(workload.getSourceType());
+        }
 
         Workload saved = workloadRepository.save(existing);
         String status = existing.getStatus() == null ? "" : existing.getStatus().toUpperCase();

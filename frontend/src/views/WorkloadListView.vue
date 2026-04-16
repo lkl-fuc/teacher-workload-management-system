@@ -30,6 +30,11 @@
 
     <el-table v-loading="tableLoading" :data="pagedRows" border>
       <el-table-column v-if="isAdmin" prop="teacherName" label="教师" width="140" />
+      <el-table-column label="任务来源" width="140">
+        <template #default="scope">
+          <el-tag :type="sourceTagType(scope.row.sourceType)">{{ sourceText(scope.row.sourceType) }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="workloadTitle" label="工作标题" min-width="180" show-overflow-tooltip />
       <el-table-column prop="descriptionText" label="完成情况描述" min-width="220" show-overflow-tooltip />
       <el-table-column label="提交文件" width="130">
@@ -166,6 +171,24 @@
       <el-button type="danger" @click="handleReject">确认驳回</el-button>
     </template>
   </el-dialog>
+
+  <el-dialog v-model="scoreVisible" title="人工审核打分" width="520px" destroy-on-close>
+    <el-form ref="scoreFormRef" :model="scoreForm" :rules="scoreRules" label-width="120px">
+      <el-form-item label="原始得分" prop="rawScore">
+        <el-input-number v-model="scoreForm.rawScore" :min="0" :max="999999" :precision="2" style="width: 100%" />
+      </el-form-item>
+      <el-form-item label="折算系数" prop="ratio">
+        <el-input-number v-model="scoreForm.ratio" :min="0" :max="5" :step="0.05" :precision="2" style="width: 100%" />
+      </el-form-item>
+      <el-form-item label="折算后工作量">
+        <el-input :model-value="convertedAmountText" disabled />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="closeScoreDialog">取消</el-button>
+      <el-button type="primary" @click="confirmApproveWithScore">确认通过并计入</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -200,6 +223,13 @@ const rejectForm = reactive({
   id: null,
   rejectReason: ''
 })
+const scoreVisible = ref(false)
+const scoreFormRef = ref()
+const scoreForm = reactive({
+  id: null,
+  rawScore: 0,
+  ratio: 1
+})
 
 const submitRules = {
   description: [{ required: true, message: '请填写完成情况', trigger: 'blur' }],
@@ -209,6 +239,11 @@ const submitRules = {
 const rejectRules = {
   rejectReason: [{ required: true, message: '请填写驳回原因', trigger: 'blur' }]
 }
+const scoreRules = {
+  rawScore: [{ required: true, message: '请填写原始得分', trigger: 'change' }],
+  ratio: [{ required: true, message: '请填写折算系数', trigger: 'change' }]
+}
+const convertedAmountText = computed(() => Number((Number(scoreForm.rawScore || 0) * Number(scoreForm.ratio || 0)).toFixed(2)).toFixed(2))
 
 const statusOptions = computed(() => {
   const common = [
@@ -303,6 +338,20 @@ function statusTagType(status) {
   if (value === 'REJECTED') return 'danger'
   if (value === 'PENDING') return 'warning'
   if (value === 'ASSIGNED') return 'info'
+  return 'info'
+}
+
+function sourceText(sourceType) {
+  const value = String(sourceType || '').toUpperCase()
+  if (value === 'ADMIN_ASSIGNED') return '管理员分发'
+  if (value === 'ANNUAL_FIXED') return '年度固定任务'
+  return '其他'
+}
+
+function sourceTagType(sourceType) {
+  const value = String(sourceType || '').toUpperCase()
+  if (value === 'ADMIN_ASSIGNED') return 'warning'
+  if (value === 'ANNUAL_FIXED') return 'success'
   return 'info'
 }
 
@@ -447,19 +496,38 @@ async function handleDelete(id) {
 }
 
 async function handleApprove(row) {
-  try {
-    await request(`/api/workloads/${row.id}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        status: 'APPROVED',
-        rejectReason: ''
+  scoreForm.id = row.id
+  scoreForm.rawScore = Number(row.amount || 0)
+  scoreForm.ratio = 1
+  scoreVisible.value = true
+}
+
+function closeScoreDialog() {
+  scoreVisible.value = false
+  scoreFormRef.value?.clearValidate()
+}
+
+async function confirmApproveWithScore() {
+  if (!scoreFormRef.value) return
+  await scoreFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    const convertedAmount = Number((Number(scoreForm.rawScore || 0) * Number(scoreForm.ratio || 0)).toFixed(2))
+    try {
+      await request(`/api/workloads/${scoreForm.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          status: 'APPROVED',
+          rejectReason: '',
+          amount: convertedAmount
+        })
       })
-    })
-    ElMessage.success('审核通过，已通知教师')
-    await loadRows()
-  } catch (error) {
-    ElMessage.error(normalizeError(error, '审核通过失败'))
-  }
+      ElMessage.success(`审核通过，按 ${scoreForm.rawScore} × ${scoreForm.ratio} 折算为 ${convertedAmount} 工作量`)
+      scoreVisible.value = false
+      await loadRows()
+    } catch (error) {
+      ElMessage.error(normalizeError(error, '审核通过失败'))
+    }
+  })
 }
 
 function openRejectDialog(row) {
