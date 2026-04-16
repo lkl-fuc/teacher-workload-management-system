@@ -120,7 +120,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="title" label="固定任务" min-width="220" />
-        <el-table-column prop="expectedUnits" label="目标次数" width="120" />
+        <el-table-column label="目标要求" width="170">
+          <template #default="scope">
+            {{ formatExpectedTarget(scope.row) }}
+          </template>
+        </el-table-column>
         <el-table-column label="本年完成次数" width="160">
           <template #default="scope">
             <el-input-number
@@ -143,7 +147,7 @@
           <template #default="scope">
             <el-input
               v-model="scope.row.note"
-              placeholder="如：完成8次学业预警访谈，闭环率100%"
+              :placeholder="scope.row.completionHint || '请填写可量化的完成说明'"
               maxlength="120"
               show-word-limit
             />
@@ -417,40 +421,40 @@ function resolveTaskYear() {
 function workloadTemplateMap(post) {
   const templates = {
     专任教师岗: [
-      { key: 'teach-core', title: '核心课程授课达成', expectedUnits: 96, baseScore: 0.25, keyword: '课堂授课', assessment: '按教学计划完成≥96课时，教学事故为0，课堂巡查合格率≥95%' },
-      { key: 'prepare-resource', title: '课程资源建设与更新', expectedUnits: 24, baseScore: 0.3, keyword: '课程资源', assessment: '每学期至少更新12份教案/课件，资源合规率100%' },
-      { key: 'research-teach', title: '教研活动与质量改进', expectedUnits: 12, baseScore: 0.5, keyword: '教研活动', assessment: '参与教研≥12次，形成可追溯改进记录，同行评议达标' },
-      { key: 'student-feedback', title: '作业批改与学业反馈', expectedUnits: 32, baseScore: 0.22, keyword: '作业批改', assessment: '批改及时率≥98%，学业预警学生反馈闭环率≥95%' }
+      { key: 'teach-core', title: '核心课程授课达成', expectedUnits: 96, targetUnit: '课时', targetCycle: '年度', baseScore: 0.25, keyword: '课堂授课', assessment: '按教学计划完成≥96课时，教学事故为0，课堂巡查合格率≥95%', completionHint: '如：完成96课时《高等数学》授课，听课抽检优良率96%' },
+      { key: 'prepare-resource', title: '课程资源建设与更新', expectedUnits: 24, targetUnit: '份', targetCycle: '年度', baseScore: 0.3, keyword: '课程资源', assessment: '每学期至少更新12份教案/课件，资源合规率100%，课程思政元素覆盖核心章节', completionHint: '如：上传课件14份、案例库8份，资源审核通过率100%' },
+      { key: 'research-teach', title: '教研活动与质量改进', expectedUnits: 12, targetUnit: '次', targetCycle: '年度', baseScore: 0.5, keyword: '教研活动', assessment: '参与教研≥12次，形成可追溯改进记录，至少落地2项课堂改进措施', completionHint: '如：参加教研12次，完成2轮课堂改进复盘并归档' },
+      { key: 'student-feedback', title: '作业批改与学业反馈', expectedUnits: 32, targetUnit: '批次', targetCycle: '年度', baseScore: 0.22, keyword: '作业批改', assessment: '批改及时率≥98%，学业预警学生反馈闭环率≥95%，错题分析覆盖主要知识点', completionHint: '如：完成32批次作业批改，预警学生回访闭环率100%' }
     ],
     实验教师岗: [
-      { key: 'lab-course', title: '实验课程组织实施', expectedUnits: 72, baseScore: 0.28, keyword: '实验教学', assessment: '完成实验教学≥72课时，实验开出率100%，无重大教学差错' },
-      { key: 'lab-guide', title: '实验项目指导与答疑', expectedUnits: 40, baseScore: 0.24, keyword: '实验指导', assessment: '项目指导覆盖重点实验班，学生满意度≥90%' },
-      { key: 'lab-safety', title: '实验室安全巡检与整改', expectedUnits: 48, baseScore: 0.18, keyword: '安全巡检', assessment: '每周巡检并留痕，隐患整改闭环率100%' },
-      { key: 'lab-assets', title: '仪器设备维护与台账', expectedUnits: 24, baseScore: 0.2, keyword: '设备管理', assessment: '设备完好率≥98%，台账准确率100%' }
+      { key: 'lab-course', title: '实验课程组织实施', expectedUnits: 72, targetUnit: '课时', targetCycle: '年度', baseScore: 0.28, keyword: '实验教学', assessment: '完成实验教学≥72课时，实验开出率100%，无重大教学差错', completionHint: '如：完成72课时实验教学，开出率100%，无安全事故' },
+      { key: 'lab-guide', title: '实验项目指导与答疑', expectedUnits: 40, targetUnit: '人次', targetCycle: '学期', baseScore: 0.24, keyword: '实验指导', assessment: '项目指导覆盖重点实验班，答疑响应及时率≥95%，学生满意度≥90%', completionHint: '如：累计指导43人次，答疑24小时内响应率97%' },
+      { key: 'lab-safety', title: '实验室安全巡检与整改', expectedUnits: 48, targetUnit: '次', targetCycle: '年度', baseScore: 0.18, keyword: '安全巡检', assessment: '每周巡检并留痕，危化品台账规范，隐患整改闭环率100%', completionHint: '如：完成48次巡检，发现隐患12项并全部闭环' },
+      { key: 'lab-assets', title: '仪器设备维护与台账', expectedUnits: 24, targetUnit: '批次', targetCycle: '年度', baseScore: 0.2, keyword: '设备管理', assessment: '设备完好率≥98%，借还记录准确率100%，关键设备有维护记录', completionHint: '如：完成24批次设备维护，设备完好率99%' }
     ],
     辅导员岗: [
-      { key: 'student-case', title: '学生分层管理与预警干预', expectedUnits: 80, baseScore: 0.2, keyword: '学生管理', assessment: '重点学生台账完整，预警处置及时率100%' },
-      { key: 'ideology-edu', title: '思想教育与主题班会', expectedUnits: 24, baseScore: 0.35, keyword: '思想教育', assessment: '主题教育不少于24场次，覆盖率100%，材料归档完整' },
-      { key: 'talk-heart', title: '谈心谈话与心理关怀', expectedUnits: 60, baseScore: 0.2, keyword: '谈心谈话', assessment: '重点人群谈话不少于60人次，回访闭环率≥95%' },
-      { key: 'daily-affairs', title: '奖助勤贷与日常事务办理', expectedUnits: 36, baseScore: 0.22, keyword: '日常事务', assessment: '事务办理准确率100%，投诉率低于1%' }
+      { key: 'student-case', title: '学生分层管理与预警干预', expectedUnits: 80, targetUnit: '人次', targetCycle: '年度', baseScore: 0.2, keyword: '学生管理', assessment: '重点学生台账完整，预警处置及时率100%，高风险学生跟踪有月度记录', completionHint: '如：重点学生干预82人次，红色预警处置及时率100%' },
+      { key: 'ideology-edu', title: '思想教育与主题班会', expectedUnits: 24, targetUnit: '场', targetCycle: '年度', baseScore: 0.35, keyword: '思想教育', assessment: '主题教育不少于24场次，覆盖率100%，活动材料归档完整', completionHint: '如：组织主题班会26场，覆盖全体学生并完成照片/纪要归档' },
+      { key: 'talk-heart', title: '谈心谈话与心理关怀', expectedUnits: 60, targetUnit: '人次', targetCycle: '年度', baseScore: 0.2, keyword: '谈心谈话', assessment: '重点人群谈话不少于60人次，回访闭环率≥95%，心理转介流程规范', completionHint: '如：完成68人次谈话，回访闭环率97%' },
+      { key: 'daily-affairs', title: '奖助勤贷与日常事务办理', expectedUnits: 36, targetUnit: '批次', targetCycle: '年度', baseScore: 0.22, keyword: '日常事务', assessment: '事务办理准确率100%，投诉率低于1%，资助审核全流程留痕', completionHint: '如：办理39批次事务，零差错，学生投诉率0.3%' }
     ],
     教辅岗: [
-      { key: 'schedule-support', title: '教学运行与排考支持', expectedUnits: 36, baseScore: 0.26, keyword: '教学秘书', assessment: '排课排考零重大差错，关键节点按时完成率100%' },
-      { key: 'resource-service', title: '教材资料与资源服务', expectedUnits: 48, baseScore: 0.18, keyword: '资源服务', assessment: '教材发放及时率100%，资源借用登记准确率100%' },
-      { key: 'device-service', title: '教学设备保障与报修跟进', expectedUnits: 50, baseScore: 0.2, keyword: '设备保障', assessment: '设备故障响应及时率≥95%，修复闭环率≥98%' },
-      { key: 'archive-quality', title: '教学档案整理与质检', expectedUnits: 30, baseScore: 0.22, keyword: '资料归档', assessment: '档案归档完整率100%，校内抽检合格率≥98%' }
+      { key: 'schedule-support', title: '教学运行与排考支持', expectedUnits: 36, targetUnit: '批次', targetCycle: '年度', baseScore: 0.26, keyword: '教学秘书', assessment: '排课排考零重大差错，关键节点按时完成率100%，教师反馈满意度≥90%', completionHint: '如：完成36批次排课排考支持，关键节点按时率100%' },
+      { key: 'resource-service', title: '教材资料与资源服务', expectedUnits: 48, targetUnit: '批次', targetCycle: '年度', baseScore: 0.18, keyword: '资源服务', assessment: '教材发放及时率100%，资源借用登记准确率100%，需求响应周期可追踪', completionHint: '如：完成教材与资料服务49批次，登记准确率100%' },
+      { key: 'device-service', title: '教学设备保障与报修跟进', expectedUnits: 50, targetUnit: '单', targetCycle: '年度', baseScore: 0.2, keyword: '设备保障', assessment: '设备故障响应及时率≥95%，修复闭环率≥98%，重点教室保障不中断', completionHint: '如：处理报修54单，48小时内闭环率98.5%' },
+      { key: 'archive-quality', title: '教学档案整理与质检', expectedUnits: 30, targetUnit: '批次', targetCycle: '年度', baseScore: 0.22, keyword: '资料归档', assessment: '档案归档完整率100%，校内抽检合格率≥98%，材料检索方便', completionHint: '如：完成30批次档案归整，抽检合格率100%' }
     ],
     行政兼课岗: [
-      { key: 'admin-execution', title: '行政专项任务执行', expectedUnits: 60, baseScore: 0.2, keyword: '行政管理', assessment: '专项任务按期完成率≥98%，跨部门协同评价良好' },
-      { key: 'part-time-teach', title: '兼课课程授课质量', expectedUnits: 48, baseScore: 0.26, keyword: '兼课教学', assessment: '完成兼课学时≥48，学生评教达标率≥90%' },
-      { key: 'process-opt', title: '流程优化与制度落实', expectedUnits: 20, baseScore: 0.3, keyword: '流程优化', assessment: '形成制度优化成果，流程执行偏差率持续下降' },
-      { key: 'quality-feedback', title: '教学检查与反馈整改', expectedUnits: 24, baseScore: 0.24, keyword: '教学检查', assessment: '检查问题整改闭环率100%，复检通过率≥95%' }
+      { key: 'admin-execution', title: '行政专项任务执行', expectedUnits: 60, targetUnit: '项', targetCycle: '年度', baseScore: 0.2, keyword: '行政管理', assessment: '专项任务按期完成率≥98%，跨部门协同评价良好，过程文档齐全', completionHint: '如：完成63项行政专项，按期完成率98.4%' },
+      { key: 'part-time-teach', title: '兼课课程授课质量', expectedUnits: 48, targetUnit: '课时', targetCycle: '年度', baseScore: 0.26, keyword: '兼课教学', assessment: '完成兼课学时≥48，学生评教达标率≥90%，教学资料按时提交', completionHint: '如：兼课50课时，评教达标率93%，资料按时提交' },
+      { key: 'process-opt', title: '流程优化与制度落实', expectedUnits: 20, targetUnit: '项', targetCycle: '年度', baseScore: 0.3, keyword: '流程优化', assessment: '形成制度优化成果，流程执行偏差率持续下降，至少输出2份优化报告', completionHint: '如：推动流程优化22项，输出制度优化报告2份' },
+      { key: 'quality-feedback', title: '教学检查与反馈整改', expectedUnits: 24, targetUnit: '次', targetCycle: '年度', baseScore: 0.24, keyword: '教学检查', assessment: '检查问题整改闭环率100%，复检通过率≥95%，台账记录完整', completionHint: '如：完成24次检查，整改闭环率100%，复检通过率96%' }
     ],
     外聘教师岗: [
-      { key: 'outsource-teach', title: '协议课程授课完成', expectedUnits: 64, baseScore: 0.24, keyword: '外聘授课', assessment: '严格按合同完成授课学时，调停课流程合规率100%' },
-      { key: 'course-eval', title: '课程考核与阅卷反馈', expectedUnits: 20, baseScore: 0.3, keyword: '课程考核', assessment: '命题规范、阅卷及时，成绩提交准时率100%' },
-      { key: 'qa-support', title: '课后答疑与学习支持', expectedUnits: 36, baseScore: 0.2, keyword: '答疑辅导', assessment: '答疑响应及时率≥95%，学生问题解决率≥90%' },
-      { key: 'teaching-files', title: '教学资料提交与归档', expectedUnits: 16, baseScore: 0.25, keyword: '资料归档', assessment: '教学文档提交完整率100%，归档规范达标' }
+      { key: 'outsource-teach', title: '协议课程授课完成', expectedUnits: 64, targetUnit: '课时', targetCycle: '年度', baseScore: 0.24, keyword: '外聘授课', assessment: '严格按合同完成授课学时，调停课流程合规率100%，课堂纪律反馈良好', completionHint: '如：按合同完成64课时，调停课流程合规率100%' },
+      { key: 'course-eval', title: '课程考核与阅卷反馈', expectedUnits: 20, targetUnit: '批次', targetCycle: '年度', baseScore: 0.3, keyword: '课程考核', assessment: '命题规范、阅卷及时，成绩提交准时率100%，试卷分析完整', completionHint: '如：完成20批次考核阅卷，成绩准时提交率100%' },
+      { key: 'qa-support', title: '课后答疑与学习支持', expectedUnits: 36, targetUnit: '次', targetCycle: '年度', baseScore: 0.2, keyword: '答疑辅导', assessment: '答疑响应及时率≥95%，学生问题解决率≥90%，薄弱学生有跟踪记录', completionHint: '如：开展40次答疑，问题解决率92%' },
+      { key: 'teaching-files', title: '教学资料提交与归档', expectedUnits: 16, targetUnit: '份', targetCycle: '年度', baseScore: 0.25, keyword: '资料归档', assessment: '教学文档提交完整率100%，归档规范达标，版本可追溯', completionHint: '如：提交16份教学资料，归档审核一次通过' }
     ]
   }
   return templates[post] || templates.专任教师岗
@@ -471,6 +475,13 @@ function calculateTaskScore(task) {
   if (expectedUnits <= 0) return 0
   const ratio = Math.min(doneUnits / expectedUnits, 1)
   return Number(task.baseScore || 0) * expectedUnits * ratio
+}
+
+function formatExpectedTarget(task) {
+  const expectedUnits = Number(task.expectedUnits || 0)
+  const unit = task.targetUnit || '次'
+  const cycle = task.targetCycle || '年度'
+  return `${expectedUnits}${unit}/${cycle}`
 }
 
 function resolveTeacherId() {
@@ -497,9 +508,11 @@ function matchFixedTypeId(task) {
 function fixedTaskDescription(task, yearText) {
   const doneUnits = Number(task.doneUnits || 0)
   const expectedUnits = Number(task.expectedUnits || 0)
+  const unit = task.targetUnit || '次'
+  const cycle = task.targetCycle || '年度'
   const note = task.note?.trim()
   const assessment = task.assessment ? `；考核标准：${task.assessment}` : ''
-  const base = `年度固定任务：${task.title}（${yearText}年，完成 ${doneUnits}/${expectedUnits} 次）${assessment}`
+  const base = `年度固定任务：${task.title}（${yearText}年，完成 ${doneUnits}/${expectedUnits} ${unit}，目标周期：${cycle}）${assessment}`
   return note ? `${base}。完成说明：${note}` : base
 }
 
