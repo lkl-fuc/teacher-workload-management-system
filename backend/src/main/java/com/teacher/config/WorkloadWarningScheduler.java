@@ -13,7 +13,7 @@ public class WorkloadWarningScheduler {
         this.workloadWarningService = workloadWarningService;
     }
 
-    @Scheduled(cron = "0 */10 * * * ?")
+    @Scheduled(cron = "0 0 9 ? * MON")
     public void scanWarningsPeriodically() {
         workloadWarningService.analyzeTeacherWorkloads(true);
     }
