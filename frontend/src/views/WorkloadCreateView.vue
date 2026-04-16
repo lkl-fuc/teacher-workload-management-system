@@ -1,7 +1,7 @@
 <template>
   <el-card>
     <template #header>
-      <span>{{ isAdmin ? '新增工作量' : '每周固定任务填报' }}</span>
+      <span>{{ isAdmin ? '新增工作量' : '年度固定任务填报' }}</span>
     </template>
 
     <template v-if="isAdmin">
@@ -98,16 +98,16 @@
         :closable="false"
         class="mb-12"
         :title="`当前岗位：${currentTeacherPost || '未设置岗位'}`"
-        description="这里展示当前岗位每周固定任务。教师勾选完成后将自动折算工作量并写入个人记录，管理员可在工作量列表中实时查看完成情况。"
+        description="这里展示当前岗位年度固定任务与考核标准。教师勾选完成后将自动折算工作量并写入个人记录，管理员可在工作量列表中实时查看完成情况。"
       />
 
       <el-form :inline="true" class="mb-12">
-        <el-form-item label="任务周次">
+        <el-form-item label="任务年度">
           <el-date-picker
-            v-model="fixedTaskWeekDate"
-            type="date"
-            value-format="YYYY-MM-DD"
-            placeholder="选择周内任意一天"
+            v-model="fixedTaskYear"
+            type="year"
+            value-format="YYYY"
+            placeholder="选择任务年度"
             style="width: 220px"
           />
         </el-form-item>
@@ -121,7 +121,7 @@
         </el-table-column>
         <el-table-column prop="title" label="固定任务" min-width="220" />
         <el-table-column prop="expectedUnits" label="目标次数" width="120" />
-        <el-table-column label="本周完成次数" width="160">
+        <el-table-column label="本年完成次数" width="160">
           <template #default="scope">
             <el-input-number
               v-model="scope.row.doneUnits"
@@ -138,11 +138,12 @@
             {{ calculateTaskScore(scope.row).toFixed(2) }}
           </template>
         </el-table-column>
+        <el-table-column prop="assessment" label="考核标准" min-width="260" show-overflow-tooltip />
         <el-table-column label="完成说明" min-width="280">
           <template #default="scope">
             <el-input
               v-model="scope.row.note"
-              placeholder="如：完成班会2次，重点覆盖心理健康教育"
+              placeholder="如：完成8次学业预警访谈，闭环率100%"
               maxlength="120"
               show-word-limit
             />
@@ -170,7 +171,7 @@ const teacherLoading = ref(false)
 const typeOptions = ref([])
 const selectedTypePath = ref([])
 const teacherOptions = ref([])
-const fixedTaskWeekDate = ref(todayText())
+const fixedTaskYear = ref(String(new Date().getFullYear()))
 const fixedTaskRows = ref([])
 const role = computed(() => String(localStorage.getItem('role') || '').toUpperCase())
 const isAdmin = computed(() => role.value === 'ADMIN')
@@ -407,54 +408,49 @@ function todayText() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function getWeekRangeText(dateText) {
-  const date = new Date(dateText || todayText())
-  const day = date.getDay() || 7
-  const monday = new Date(date)
-  monday.setDate(date.getDate() - day + 1)
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  return `${toDateText(monday)}~${toDateText(sunday)}`
-}
-
-function toDateText(date) {
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  return `${year}-${month}-${day}`
+function resolveTaskYear() {
+  const year = Number(fixedTaskYear.value || new Date().getFullYear())
+  if (Number.isNaN(year) || year < 2000) return String(new Date().getFullYear())
+  return String(year)
 }
 
 function workloadTemplateMap(post) {
   const templates = {
     专任教师岗: [
-      { key: 'teach', title: '课堂授课与教学实施', expectedUnits: 4, baseScore: 2.5, keyword: '教学' },
-      { key: 'prepare', title: '备课与课程资料更新', expectedUnits: 2, baseScore: 1.5, keyword: '教研' },
-      { key: 'answer', title: '答疑与作业反馈', expectedUnits: 2, baseScore: 1.2, keyword: '授课' }
+      { key: 'teach-core', title: '核心课程授课达成', expectedUnits: 96, baseScore: 0.25, keyword: '课堂授课', assessment: '按教学计划完成≥96课时，教学事故为0，课堂巡查合格率≥95%' },
+      { key: 'prepare-resource', title: '课程资源建设与更新', expectedUnits: 24, baseScore: 0.3, keyword: '课程资源', assessment: '每学期至少更新12份教案/课件，资源合规率100%' },
+      { key: 'research-teach', title: '教研活动与质量改进', expectedUnits: 12, baseScore: 0.5, keyword: '教研活动', assessment: '参与教研≥12次，形成可追溯改进记录，同行评议达标' },
+      { key: 'student-feedback', title: '作业批改与学业反馈', expectedUnits: 32, baseScore: 0.22, keyword: '作业批改', assessment: '批改及时率≥98%，学业预警学生反馈闭环率≥95%' }
     ],
     实验教师岗: [
-      { key: 'lab', title: '实验课程组织与指导', expectedUnits: 3, baseScore: 2.4, keyword: '实验' },
-      { key: 'safety', title: '实验室安全巡检', expectedUnits: 2, baseScore: 1.6, keyword: '实验室' },
-      { key: 'record', title: '实验记录归档', expectedUnits: 2, baseScore: 1.2, keyword: '指导' }
+      { key: 'lab-course', title: '实验课程组织实施', expectedUnits: 72, baseScore: 0.28, keyword: '实验教学', assessment: '完成实验教学≥72课时，实验开出率100%，无重大教学差错' },
+      { key: 'lab-guide', title: '实验项目指导与答疑', expectedUnits: 40, baseScore: 0.24, keyword: '实验指导', assessment: '项目指导覆盖重点实验班，学生满意度≥90%' },
+      { key: 'lab-safety', title: '实验室安全巡检与整改', expectedUnits: 48, baseScore: 0.18, keyword: '安全巡检', assessment: '每周巡检并留痕，隐患整改闭环率100%' },
+      { key: 'lab-assets', title: '仪器设备维护与台账', expectedUnits: 24, baseScore: 0.2, keyword: '设备管理', assessment: '设备完好率≥98%，台账准确率100%' }
     ],
     辅导员岗: [
-      { key: 'class', title: '主题班会/年级会', expectedUnits: 2, baseScore: 2.0, keyword: '学生' },
-      { key: 'talk', title: '学生谈心谈话', expectedUnits: 4, baseScore: 1.2, keyword: '思政' },
-      { key: 'daily', title: '学生日常事务处理', expectedUnits: 5, baseScore: 0.8, keyword: '事务' }
+      { key: 'student-case', title: '学生分层管理与预警干预', expectedUnits: 80, baseScore: 0.2, keyword: '学生管理', assessment: '重点学生台账完整，预警处置及时率100%' },
+      { key: 'ideology-edu', title: '思想教育与主题班会', expectedUnits: 24, baseScore: 0.35, keyword: '思想教育', assessment: '主题教育不少于24场次，覆盖率100%，材料归档完整' },
+      { key: 'talk-heart', title: '谈心谈话与心理关怀', expectedUnits: 60, baseScore: 0.2, keyword: '谈心谈话', assessment: '重点人群谈话不少于60人次，回访闭环率≥95%' },
+      { key: 'daily-affairs', title: '奖助勤贷与日常事务办理', expectedUnits: 36, baseScore: 0.22, keyword: '日常事务', assessment: '事务办理准确率100%，投诉率低于1%' }
     ],
     教辅岗: [
-      { key: 'service', title: '教学资源服务支持', expectedUnits: 4, baseScore: 1.5, keyword: '教辅' },
-      { key: 'device', title: '设备与资料维护', expectedUnits: 2, baseScore: 1.8, keyword: '设备' },
-      { key: 'coord', title: '教学保障协调工作', expectedUnits: 2, baseScore: 1.3, keyword: '保障' }
+      { key: 'schedule-support', title: '教学运行与排考支持', expectedUnits: 36, baseScore: 0.26, keyword: '教学秘书', assessment: '排课排考零重大差错，关键节点按时完成率100%' },
+      { key: 'resource-service', title: '教材资料与资源服务', expectedUnits: 48, baseScore: 0.18, keyword: '资源服务', assessment: '教材发放及时率100%，资源借用登记准确率100%' },
+      { key: 'device-service', title: '教学设备保障与报修跟进', expectedUnits: 50, baseScore: 0.2, keyword: '设备保障', assessment: '设备故障响应及时率≥95%，修复闭环率≥98%' },
+      { key: 'archive-quality', title: '教学档案整理与质检', expectedUnits: 30, baseScore: 0.22, keyword: '资料归档', assessment: '档案归档完整率100%，校内抽检合格率≥98%' }
     ],
     行政兼课岗: [
-      { key: 'admin', title: '行政事务执行', expectedUnits: 4, baseScore: 1.4, keyword: '行政' },
-      { key: 'teach', title: '兼课授课', expectedUnits: 2, baseScore: 2.1, keyword: '兼课' },
-      { key: 'coord', title: '跨部门协调', expectedUnits: 2, baseScore: 1.2, keyword: '管理' }
+      { key: 'admin-execution', title: '行政专项任务执行', expectedUnits: 60, baseScore: 0.2, keyword: '行政管理', assessment: '专项任务按期完成率≥98%，跨部门协同评价良好' },
+      { key: 'part-time-teach', title: '兼课课程授课质量', expectedUnits: 48, baseScore: 0.26, keyword: '兼课教学', assessment: '完成兼课学时≥48，学生评教达标率≥90%' },
+      { key: 'process-opt', title: '流程优化与制度落实', expectedUnits: 20, baseScore: 0.3, keyword: '流程优化', assessment: '形成制度优化成果，流程执行偏差率持续下降' },
+      { key: 'quality-feedback', title: '教学检查与反馈整改', expectedUnits: 24, baseScore: 0.24, keyword: '教学检查', assessment: '检查问题整改闭环率100%，复检通过率≥95%' }
     ],
     外聘教师岗: [
-      { key: 'course', title: '外聘课程授课', expectedUnits: 3, baseScore: 2.2, keyword: '外聘' },
-      { key: 'qa', title: '课程答疑与指导', expectedUnits: 2, baseScore: 1.3, keyword: '答疑' },
-      { key: 'eval', title: '考核与教学反馈', expectedUnits: 1, baseScore: 1.5, keyword: '教学' }
+      { key: 'outsource-teach', title: '协议课程授课完成', expectedUnits: 64, baseScore: 0.24, keyword: '外聘授课', assessment: '严格按合同完成授课学时，调停课流程合规率100%' },
+      { key: 'course-eval', title: '课程考核与阅卷反馈', expectedUnits: 20, baseScore: 0.3, keyword: '课程考核', assessment: '命题规范、阅卷及时，成绩提交准时率100%' },
+      { key: 'qa-support', title: '课后答疑与学习支持', expectedUnits: 36, baseScore: 0.2, keyword: '答疑辅导', assessment: '答疑响应及时率≥95%，学生问题解决率≥90%' },
+      { key: 'teaching-files', title: '教学资料提交与归档', expectedUnits: 16, baseScore: 0.25, keyword: '资料归档', assessment: '教学文档提交完整率100%，归档规范达标' }
     ]
   }
   return templates[post] || templates.专任教师岗
@@ -498,12 +494,13 @@ function matchFixedTypeId(task) {
   return Number(filteredTypeOptions.value[0]?.id || typeOptions.value[0]?.id || 0)
 }
 
-function fixedTaskDescription(task, weekRange) {
+function fixedTaskDescription(task, yearText) {
   const doneUnits = Number(task.doneUnits || 0)
   const expectedUnits = Number(task.expectedUnits || 0)
   const note = task.note?.trim()
-  const base = `固定任务周报：${task.title}（${weekRange}，完成 ${doneUnits}/${expectedUnits} 次）`
-  return note ? `${base}。备注：${note}` : base
+  const assessment = task.assessment ? `；考核标准：${task.assessment}` : ''
+  const base = `年度固定任务：${task.title}（${yearText}年，完成 ${doneUnits}/${expectedUnits} 次）${assessment}`
+  return note ? `${base}。完成说明：${note}` : base
 }
 
 async function submitFixedTasks() {
@@ -521,8 +518,8 @@ async function submitFixedTasks() {
 
   submitLoading.value = true
   try {
-    const weekRange = getWeekRangeText(fixedTaskWeekDate.value)
-    const submitDate = fixedTaskWeekDate.value || todayText()
+    const yearText = resolveTaskYear()
+    const submitDate = `${yearText}-12-31`
     for (const task of doneTasks) {
       const typeId = matchFixedTypeId(task)
       if (!typeId) {
@@ -531,9 +528,9 @@ async function submitFixedTasks() {
       const payload = {
         teacherId,
         typeId,
-        workloadTitle: `${task.title}（${weekRange}）`,
+        workloadTitle: `${task.title}（${yearText}年度）`,
         amount: Number(calculateTaskScore(task).toFixed(2)),
-        description: fixedTaskDescription(task, weekRange),
+        description: fixedTaskDescription(task, yearText),
         submitDate,
         status: 'PENDING'
       }
@@ -543,7 +540,7 @@ async function submitFixedTasks() {
       })
     }
 
-    ElMessage.success(`已提交 ${doneTasks.length} 项固定任务，管理员可在工作量列表查看`)
+    ElMessage.success(`已提交 ${doneTasks.length} 项年度固定任务，管理员可在工作量列表查看`)
     resetFixedTasks()
   } catch (error) {
     ElMessage.error(normalizeError(error, '固定任务提交失败'))

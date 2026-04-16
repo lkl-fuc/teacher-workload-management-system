@@ -4,7 +4,7 @@
       <div class="card-header">
         <div class="header-title-group">
           <span class="header-title">工作量类型管理</span>
-          <span class="header-subtitle">按「大类 - 小类」分组展示，支持快速维护。</span>
+          <span class="header-subtitle">按「岗位大类 - 细分任务 - 考核标准」展示，支持差异化维护。</span>
         </div>
         <div class="header-actions">
           <el-button @click="seedDefaultTypes" :loading="seedLoading">一键生成建议类型</el-button>
@@ -45,7 +45,7 @@
       </el-table-column>
       <el-table-column prop="subTypeName" label="细分类型" min-width="180">
         <template #default="scope">
-          <span v-if="scope.row.isCategoryRow">请选择下拉箭头查看小类</span>
+          <span v-if="scope.row.isCategoryRow">请选择下拉箭头查看细分考核项</span>
           <span v-else>{{ scope.row.subTypeName }}</span>
         </template>
       </el-table-column>
@@ -143,33 +143,44 @@ const currentId = ref(null)
 const formRef = ref()
 
 const categoryDict = {
-  专任教师岗: ['课堂授课', '教学准备', '教研活动'],
-  实验教师岗: ['实验教学', '实验室指导', '实验室安全维护'],
-  辅导员岗: ['学生管理', '思想教育', '日常事务'],
-  教辅岗: ['图书资源服务', '设备保障服务', '教学秘书支持'],
-  行政兼课岗: ['行政管理事务', '兼课教学任务', '行政教学协同'],
-  外聘教师岗: ['外聘授课', '课程考核', '答疑辅导']
+  专任教师岗: ['理论课授课达成', '课程资源建设', '作业批改与反馈', '教研听评课'],
+  实验教师岗: ['实验课程实施', '实验项目指导', '实验室安全巡检', '仪器设备台账'],
+  辅导员岗: ['学生分层管理', '思想教育活动', '谈心谈话干预', '奖助勤贷事务'],
+  教辅岗: ['排课排考支持', '教材资料服务', '教学设备保障', '教学档案质检'],
+  行政兼课岗: ['行政任务执行', '兼课授课质量', '流程优化改进', '教学检查整改'],
+  外聘教师岗: ['协议课程授课', '课程考核阅卷', '课后答疑支持', '教学资料归档']
 }
 
 const defaultTypeList = [
-  { categoryName: '专任教师岗', subTypeName: '课堂授课', unitValue: 8, remark: '专任教师每周授课工作量' },
-  { categoryName: '专任教师岗', subTypeName: '教学准备', unitValue: 4, remark: '教案、备课与课程资源建设' },
-  { categoryName: '专任教师岗', subTypeName: '教研活动', unitValue: 5, remark: '教研会议、听评课与教学改进' },
-  { categoryName: '实验教师岗', subTypeName: '实验教学', unitValue: 8, remark: '实验课程教学与课堂组织' },
-  { categoryName: '实验教师岗', subTypeName: '实验室指导', unitValue: 6, remark: '实验项目指导与答疑' },
-  { categoryName: '实验教师岗', subTypeName: '实验室安全维护', unitValue: 5, remark: '实验室安全巡检与设备管理' },
-  { categoryName: '辅导员岗', subTypeName: '学生管理', unitValue: 6, remark: '学生日常管理与数据维护' },
-  { categoryName: '辅导员岗', subTypeName: '思想教育', unitValue: 7, remark: '主题班会、思政教育与谈心谈话' },
-  { categoryName: '辅导员岗', subTypeName: '日常事务', unitValue: 5, remark: '请销假、奖助勤贷与突发事务处理' },
-  { categoryName: '教辅岗', subTypeName: '图书资源服务', unitValue: 5, remark: '图书借阅管理、教材发放支持' },
-  { categoryName: '教辅岗', subTypeName: '设备保障服务', unitValue: 6, remark: '教学设备巡检、报修与保障' },
-  { categoryName: '教辅岗', subTypeName: '教学秘书支持', unitValue: 5, remark: '教学秘书排课、考试组织与资料归档' },
-  { categoryName: '行政兼课岗', subTypeName: '行政管理事务', unitValue: 6, remark: '行政管理、流程审批与协调工作' },
-  { categoryName: '行政兼课岗', subTypeName: '兼课教学任务', unitValue: 7, remark: '行政人员承担课程授课任务' },
-  { categoryName: '行政兼课岗', subTypeName: '行政教学协同', unitValue: 5, remark: '教学检查、质量反馈与改进' },
-  { categoryName: '外聘教师岗', subTypeName: '外聘授课', unitValue: 7, remark: '外聘教师课程授课任务' },
-  { categoryName: '外聘教师岗', subTypeName: '课程考核', unitValue: 5, remark: '作业批改、考试命题与阅卷' },
-  { categoryName: '外聘教师岗', subTypeName: '答疑辅导', unitValue: 4, remark: '课后答疑与学习辅导' }
+  { categoryName: '专任教师岗', subTypeName: '理论课授课达成', unitValue: 9, remark: '考核：年度授课学时达标、课堂巡查合格率≥95%、教学事故为0' },
+  { categoryName: '专任教师岗', subTypeName: '课程资源建设', unitValue: 6, remark: '考核：教案/课件更新完整，课程资源学期更新次数达标' },
+  { categoryName: '专任教师岗', subTypeName: '作业批改与反馈', unitValue: 5, remark: '考核：批改及时率≥98%，学业预警反馈闭环率≥95%' },
+  { categoryName: '专任教师岗', subTypeName: '教研听评课', unitValue: 6, remark: '考核：教研参与次数达标，听评课记录齐全并形成改进报告' },
+
+  { categoryName: '实验教师岗', subTypeName: '实验课程实施', unitValue: 8, remark: '考核：实验开出率100%，课堂组织规范、无重大差错' },
+  { categoryName: '实验教师岗', subTypeName: '实验项目指导', unitValue: 7, remark: '考核：实验项目指导覆盖完整，学生满意度≥90%' },
+  { categoryName: '实验教师岗', subTypeName: '实验室安全巡检', unitValue: 6, remark: '考核：巡检台账完整，隐患整改闭环率100%' },
+  { categoryName: '实验教师岗', subTypeName: '仪器设备台账', unitValue: 5, remark: '考核：设备完好率≥98%，台账一致性100%' },
+
+  { categoryName: '辅导员岗', subTypeName: '学生分层管理', unitValue: 7, remark: '考核：重点学生台账完整，预警处置及时率100%' },
+  { categoryName: '辅导员岗', subTypeName: '思想教育活动', unitValue: 7, remark: '考核：主题教育活动覆盖率100%，过程材料齐全' },
+  { categoryName: '辅导员岗', subTypeName: '谈心谈话干预', unitValue: 6, remark: '考核：重点学生谈话与回访记录齐全，闭环率≥95%' },
+  { categoryName: '辅导员岗', subTypeName: '奖助勤贷事务', unitValue: 5, remark: '考核：事务办理准确率100%，投诉率低于1%' },
+
+  { categoryName: '教辅岗', subTypeName: '排课排考支持', unitValue: 6, remark: '考核：排课排考零重大差错，关键节点按时完成率100%' },
+  { categoryName: '教辅岗', subTypeName: '教材资料服务', unitValue: 5, remark: '考核：教材发放及时准确，资源借用登记完整' },
+  { categoryName: '教辅岗', subTypeName: '教学设备保障', unitValue: 6, remark: '考核：故障响应及时率≥95%，维修闭环率≥98%' },
+  { categoryName: '教辅岗', subTypeName: '教学档案质检', unitValue: 5, remark: '考核：教学档案归档完整率100%，抽检合格率≥98%' },
+
+  { categoryName: '行政兼课岗', subTypeName: '行政任务执行', unitValue: 6, remark: '考核：专项任务按期完成率≥98%，协同评价良好' },
+  { categoryName: '行政兼课岗', subTypeName: '兼课授课质量', unitValue: 7, remark: '考核：兼课学时达标，学生评教达标率≥90%' },
+  { categoryName: '行政兼课岗', subTypeName: '流程优化改进', unitValue: 6, remark: '考核：形成可量化流程优化成果并落地执行' },
+  { categoryName: '行政兼课岗', subTypeName: '教学检查整改', unitValue: 5, remark: '考核：问题整改闭环率100%，复检通过率≥95%' },
+
+  { categoryName: '外聘教师岗', subTypeName: '协议课程授课', unitValue: 7, remark: '考核：按合同完成授课学时，调停课流程合规率100%' },
+  { categoryName: '外聘教师岗', subTypeName: '课程考核阅卷', unitValue: 6, remark: '考核：命题规范、阅卷及时，成绩提交准时率100%' },
+  { categoryName: '外聘教师岗', subTypeName: '课后答疑支持', unitValue: 5, remark: '考核：答疑响应及时率≥95%，问题解决率≥90%' },
+  { categoryName: '外聘教师岗', subTypeName: '教学资料归档', unitValue: 5, remark: '考核：教学资料提交完整率100%，归档符合规范' }
 ]
 
 const form = reactive({
