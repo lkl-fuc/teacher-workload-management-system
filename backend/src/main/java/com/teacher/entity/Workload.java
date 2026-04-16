@@ -37,6 +37,9 @@ public class Workload {
     @Column(name = "reject_reason")
     private String rejectReason;
 
+    @Column(name = "source_type")
+    private String sourceType;
+
     @Column(name = "create_time", insertable = false, updatable = false)
     private LocalDateTime createTime;
 
