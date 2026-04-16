@@ -18,6 +18,19 @@
         <el-table-column prop="teacherId" label="教师ID" width="90" />
         <el-table-column prop="typeId" label="类型ID" width="90" />
         <el-table-column prop="description" label="描述" min-width="220" show-overflow-tooltip />
+        <el-table-column label="提交文件" width="120">
+          <template #default="scope">
+            <el-button
+              v-if="extractFileUrl(scope.row.description)"
+              link
+              type="primary"
+              @click="openFileLink(extractFileUrl(scope.row.description))"
+            >
+              查看文件
+            </el-button>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="amount" label="分值" width="100" />
         <el-table-column prop="submitDate" label="提交日期" width="120" />
         <el-table-column label="审核状态" width="110">
@@ -253,6 +266,20 @@ function sourceTagType(sourceType) {
   if (value === 'ANNUAL_FIXED') return 'success'
   if (value === 'REPRESENTATIVE_WORK') return 'primary'
   return 'info'
+}
+
+function extractFileUrl(description) {
+  const raw = String(description || '')
+  const marker = '[文件链接]'
+  const markerIndex = raw.lastIndexOf(marker)
+  if (markerIndex < 0) return ''
+  return raw.slice(markerIndex + marker.length).trim()
+}
+
+function openFileLink(url) {
+  const link = String(url || '').trim()
+  if (!link) return
+  window.open(link, '_blank', 'noopener,noreferrer')
 }
 
 function loadEchartsScript() {
