@@ -45,6 +45,7 @@ public class WorkloadServiceImpl implements WorkloadService {
     @Override
     @Transactional
     public Workload createWorkload(Workload workload) {
+        fillTypeIdForFlexibleSource(workload);
         validateRequiredFields(workload);
         validateRelation(workload.getTeacherId(), workload.getTypeId(), workload.getSourceType(), true);
 
@@ -212,5 +213,31 @@ public class WorkloadServiceImpl implements WorkloadService {
     private boolean allowEmptyType(String sourceType) {
         return "ADMIN_ASSIGNED".equalsIgnoreCase(sourceType)
                 || "REPRESENTATIVE_WORK".equalsIgnoreCase(sourceType);
+    }
+
+    private void fillTypeIdForFlexibleSource(Workload workload) {
+        if (workload == null || workload.getTypeId() != null || !allowEmptyType(workload.getSourceType())) {
+            return;
+        }
+
+        Long teacherId = workload.getTeacherId();
+        if (teacherId == null) {
+            return;
+        }
+
+        String postType = teacherRepository.findById(teacherId)
+                .map(teacher -> teacher.getPostType())
+                .orElse("");
+
+        List<WorkloadType> allTypes = workloadTypeRepository.findAll();
+        if (allTypes.isEmpty()) {
+            return;
+        }
+
+        WorkloadType preferred = allTypes.stream()
+                .filter(type -> matchesPostType(postType, type))
+                .findFirst()
+                .orElse(allTypes.get(0));
+        workload.setTypeId(preferred.getId());
     }
 }
