@@ -71,6 +71,7 @@ const baseTeacherMenu = [
     icon: Management,
     children: [
       { index: '/teacher/post-tasks', label: '岗位任务面板', icon: Files },
+      { index: '/workloads/new', label: '填报工作量', icon: Plus },
       { index: '/workloads/my', label: '我的提交记录', icon: Tickets },
       { index: '/workloads/stats', label: '个人工作量统计', icon: PieChart }
     ]
