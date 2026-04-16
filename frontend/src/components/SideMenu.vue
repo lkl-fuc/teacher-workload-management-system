@@ -70,7 +70,7 @@ const baseTeacherMenu = [
     label: '任务中心',
     icon: Management,
     children: [
-      { index: '/teacher/post-tasks', label: '岗位任务面板', icon: Files },
+      { index: '/teacher/schedule', label: '岗位任务面板', icon: Files },
       { index: '/workloads/new', label: '填报工作量', icon: Plus },
       { index: '/workloads/my', label: '我的提交记录', icon: Tickets },
       { index: '/workloads/stats', label: '个人工作量统计', icon: PieChart }
@@ -95,7 +95,7 @@ const teacherPostMenus = {
     { index: '/teacher/schedule', label: '实验安排', icon: Calendar }
   ],
   辅导员岗: [{ index: '/teacher/schedule', label: '学生事务日程', icon: Calendar }],
-  教辅岗: [{ index: '/teacher/post-tasks', label: '教辅服务任务看板', icon: Plus }],
+  教辅岗: [{ index: '/teacher/schedule', label: '教学安排', icon: Calendar }],
   行政兼课岗: [{ index: '/teacher/schedule', label: '行政/兼课日程', icon: Calendar }],
   外聘教师岗: [{ index: '/teacher/schedule', label: '授课计划', icon: Calendar }]
 }

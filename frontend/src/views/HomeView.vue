@@ -43,7 +43,7 @@
           </div>
           <div v-else class="teacher-actions">
             <el-button type="primary" plain @click="goTo('/workloads/new')">填报工作量</el-button>
-            <el-button type="success" plain @click="goTo('/teacher/post-tasks')">查看岗位任务</el-button>
+            <el-button type="success" plain @click="goTo('/teacher/schedule')">查看教学安排</el-button>
             <el-button type="warning" plain @click="goTo('/teacher/notices')">查看预警通知</el-button>
           </div>
           <div v-if="isTeacher" class="focus-list">
