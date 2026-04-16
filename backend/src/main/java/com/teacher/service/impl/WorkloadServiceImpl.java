@@ -46,7 +46,7 @@ public class WorkloadServiceImpl implements WorkloadService {
     @Transactional
     public Workload createWorkload(Workload workload) {
         validateRequiredFields(workload);
-        validateRelation(workload.getTeacherId(), workload.getTypeId(), true);
+        validateRelation(workload.getTeacherId(), workload.getTypeId(), workload.getSourceType(), true);
 
         workload.setId(null);
         return workloadRepository.save(workload);
@@ -70,7 +70,8 @@ public class WorkloadServiceImpl implements WorkloadService {
             existing.setTypeId(workload.getTypeId());
         }
 
-        validateRelation(teacherIdToCheck, typeIdToCheck, false);
+        String sourceTypeToCheck = workload.getSourceType() != null ? workload.getSourceType() : existing.getSourceType();
+        validateRelation(teacherIdToCheck, typeIdToCheck, sourceTypeToCheck, false);
 
         if (workload.getWorkloadTitle() != null) {
             existing.setWorkloadTitle(workload.getWorkloadTitle());
@@ -123,7 +124,7 @@ public class WorkloadServiceImpl implements WorkloadService {
         if (workload.getTeacherId() == null) {
             throw new IllegalArgumentException("teacherId 不能为空");
         }
-        if (workload.getTypeId() == null) {
+        if (workload.getTypeId() == null && !isAdminAssigned(workload.getSourceType())) {
             throw new IllegalArgumentException("typeId 不能为空");
         }
         if (workload.getWorkloadTitle() == null || workload.getWorkloadTitle().isBlank()) {
@@ -131,15 +132,18 @@ public class WorkloadServiceImpl implements WorkloadService {
         }
     }
 
-    private void validateRelation(Long teacherId, Long typeId, boolean strictPostMatch) {
+    private void validateRelation(Long teacherId, Long typeId, String sourceType, boolean strictPostMatch) {
         if (teacherId == null) {
             throw new IllegalArgumentException("teacherId 不能为空");
         }
-        if (typeId == null) {
+        if (typeId == null && !isAdminAssigned(sourceType)) {
             throw new IllegalArgumentException("typeId 不能为空");
         }
         if (!teacherRepository.existsById(teacherId)) {
             throw new IllegalArgumentException("教师不存在，id=" + teacherId);
+        }
+        if (typeId == null) {
+            return;
         }
         if (!workloadTypeRepository.existsById(typeId)) {
             throw new IllegalArgumentException("工作量类型不存在，id=" + typeId);
@@ -203,5 +207,9 @@ public class WorkloadServiceImpl implements WorkloadService {
     private String normalize(String value) {
         if (value == null) return "";
         return value.toLowerCase(Locale.ROOT).replace(" ", "");
+    }
+
+    private boolean isAdminAssigned(String sourceType) {
+        return "ADMIN_ASSIGNED".equalsIgnoreCase(sourceType);
     }
 }
