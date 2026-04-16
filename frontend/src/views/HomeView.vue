@@ -90,16 +90,16 @@ const heroDesc = computed(() =>
     : '面向学院教学管理场景，支持工作量录入、审核、统计与分析。当前界面为毕业设计展示优化版，强调简洁布局、统一配色与核心数据可视化。'
 )
 
-const introTitle = computed(() => (isTeacher.value ? '岗位工作画像' : '系统简介'))
+const introTitle = computed(() => (isTeacher.value ? '系统使用教学' : '系统简介'))
 const rightTitle = computed(() => (isTeacher.value ? '快捷入口与本周关注' : '展示亮点'))
 
 const introList = computed(() => {
   if (isTeacher.value) {
     const postText = teacherPost.value
     return [
-      `您当前为${postText}，首页内容已按岗位职责个性化展示。`,
-      '聚焦个人工作量填报、审核结果与任务截止时间，不再展示管理员全局统计。',
-      '可通过右侧快捷入口直达岗位任务面板、通知公告与工作量填报页面。'
+      `您当前为${postText}，请先在“任务中心 > 填报工作量”中完成日常工作量填报。`,
+      '填报后可在“我的提交记录”查看审核进度，在“个人工作量统计”查看汇总结果。',
+      '如需处理岗位事项或查看提醒信息，可通过任务中心与个人工具中的对应页面进入。'
     ]
   }
   return [
